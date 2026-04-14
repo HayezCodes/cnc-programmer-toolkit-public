@@ -7,8 +7,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from utils.ui_helpers import render_sidebar_nav
-
-from utils.checklist_utils import build_job_folder_path, open_job_folder
 from data.machines_data import MACHINES
 
 st.set_page_config(
@@ -608,24 +606,6 @@ job_number = st.session_state["active_checklist_job_number"]
 drawing_number = st.session_state["active_checklist_drawing_number"]
 revision = st.session_state["active_checklist_revision"]
 machine = st.session_state["active_checklist_machine"]
-
-job_col1, job_col2 = st.columns(2)
-
-with job_col1:
-    if st.button("🚀 Open Job Folder", width="stretch"):
-        success, message = open_job_folder(job_number)
-        if success:
-            st.success(message)
-        else:
-            st.error(message)
-
-with job_col2:
-    if job_number:
-        try:
-            preview_path = build_job_folder_path(job_number)
-            st.info(f"Path Preview:\n{preview_path}")
-        except Exception as e:
-            st.warning(str(e))
 
 c5, c6, c7 = st.columns(3)
 with c5:
