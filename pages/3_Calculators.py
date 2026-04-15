@@ -50,16 +50,10 @@ header[data-testid="stHeader"] {
 
 render_sidebar_nav("Calculators")
 
-col1, col2 = st.columns([1, 6])
-with col1:
-    if st.button("🏠"):
-        st.switch_page("app.py")
-
-with col2:
-    st.markdown('<div class="calc-title-wrap">', unsafe_allow_html=True)
-    st.title("Calculators")
-    st.caption("Empower MFG - Built for Joshua")
-    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('<div class="calc-title-wrap">', unsafe_allow_html=True)
+st.title("Calculators")
+st.caption("Empower MFG - Built for Joshua")
+st.markdown("</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     ["Triangle", "Keyway", "Center Drill", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
