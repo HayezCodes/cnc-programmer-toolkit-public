@@ -151,24 +151,3 @@ with tool_col2:
     """, unsafe_allow_html=True)
     if st.button("Calculators", use_container_width=True):
         st.switch_page("pages/3_Calculators.py")
-
-# ---------------------------
-# CHECKLIST
-# ---------------------------
-st.markdown('<div class="section-label">Checklist</div>', unsafe_allow_html=True)
-
-check_col1, check_col2 = st.columns([2, 1])
-
-with check_col1:
-    st.markdown("""
-    <div class="tool-card">
-        <div class="tool-icon">✅</div>
-        <div class="tool-title">Checklist</div>
-        <div class="tool-text">Interactive programming verification, save drafts, submit logs, recent history, and job-folder pull support.</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Checklist", use_container_width=True):
-        st.switch_page("pages/99_Checklist.py")
-
-with check_col2:
-    st.empty()
