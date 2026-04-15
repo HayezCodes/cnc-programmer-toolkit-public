@@ -64,7 +64,6 @@ This app is focused on real CNC programming support:
 - speeds and feeds
 - machining calculators
 - threads and modeling support
-- checklist workflow
 - standards and machine notes
 - tool chooser system
 

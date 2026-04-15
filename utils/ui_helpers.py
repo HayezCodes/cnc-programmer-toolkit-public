@@ -18,6 +18,3 @@ def render_sidebar_nav(current_page: str):
     st.sidebar.markdown("### Tools")
     st.sidebar.page_link("pages/2_Threads.py", label="Threads")
     st.sidebar.page_link("pages/3_Calculators.py", label="Calculators")
-
-    st.sidebar.markdown("---")
-    st.sidebar.page_link("pages/99_Checklist.py", label="Checklist")
