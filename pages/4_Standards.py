@@ -1,5 +1,4 @@
 import os
-import webbrowser
 import streamlit as st
 from utils.ui_helpers import render_sidebar_nav
 
@@ -149,8 +148,14 @@ st.code(selected_path)
 btn1, btn2 = st.columns(2)
 with btn1:
     if st.button("Open File", use_container_width=True):
-        webbrowser.open(selected_path)
+        try:
+            os.startfile(selected_path)
+        except Exception as e:
+            st.error(f"Failed to open file: {e}")
 
 with btn2:
     if st.button("Open Folder", use_container_width=True):
-        webbrowser.open(company_path)
+        try:
+            os.startfile(company_path)
+        except Exception as e:
+            st.error(f"Failed to open folder: {e}")

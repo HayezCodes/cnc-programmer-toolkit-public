@@ -789,7 +789,7 @@ MACHINES = {
             "Rotary fixture through-hole fits shafts under about 3.5 - 4.0 in diameter.",
         ],
         "offset_logic": [
-            "Offset 1 is on the left and counts up as you go right.",
+            "Offset 1 is on the right and counts up as you go left.",
         ],
         "milling_notes": HAAS_FLIP_SEQUENCE_30,
         "posting_cimco": [
@@ -824,7 +824,7 @@ MACHINES = {
             "Max length from chuck face to tailstock is 22 in.",
         ],
         "offset_logic": [
-            "G110 is on the left and counts as you go right.",
+            "G110 is on the right and counts up as you go left.",
         ],
         "milling_notes": [
             "Flip sequence:",
