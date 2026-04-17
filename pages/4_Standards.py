@@ -1,4 +1,6 @@
 import os
+import platform
+import subprocess
 import streamlit as st
 from utils.ui_helpers import render_sidebar_nav
 
@@ -116,6 +118,20 @@ def get_companies(path: str):
         st.error(f"Error reading standards folders: {e}")
         return []
 
+
+def open_path(path):
+    try:
+        system = platform.system()
+        if system == "Windows":
+            os.startfile(path)
+        elif system == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+    except Exception as e:
+        st.error(f"Failed to open path: {e}")
+        st.code(path)
+
 companies = get_companies(base_path)
 
 if not companies:
@@ -148,14 +164,8 @@ st.code(selected_path)
 btn1, btn2 = st.columns(2)
 with btn1:
     if st.button("Open File", use_container_width=True):
-        try:
-            os.startfile(selected_path)
-        except Exception as e:
-            st.error(f"Failed to open file: {e}")
+        open_path(selected_path)
 
 with btn2:
     if st.button("Open Folder", use_container_width=True):
-        try:
-            os.startfile(company_path)
-        except Exception as e:
-            st.error(f"Failed to open folder: {e}")
+        open_path(company_path)
