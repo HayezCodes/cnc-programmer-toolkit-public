@@ -10,8 +10,10 @@ LATHE_MACHINES = [
     "430 Mazak QTS-250",
     "431 Mazak QTS-250",
     "432 Mazak QTS-450 MY",
+    "437 Mazak QTS-450 MY",
     "433 Mazak QTS-350",
     "434 Mazak QTS-350",
+    "435 Okuma LB3000",
     "436 Okuma LB4000"
 ]
 

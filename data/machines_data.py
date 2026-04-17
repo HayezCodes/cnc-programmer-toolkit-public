@@ -1,1079 +1,910 @@
+TOOLS_417_426 = [
+    "1. Rough",
+    "2. Finish",
+    "3. Backwards rough",
+    "4. Backwards finish",
+    "5. Groove",
+    "6. Thread",
+]
+
+TOOLS_423_424 = [
+    "1. Rough (.12 - .20 per pass)",
+    "2. Center",
+    "3. Finish",
+    "4. Drill",
+    "5. RH thread",
+    "6. Drill for tap",
+    "7. LH thread",
+    "8. Bore",
+    "9. Groove (triangle)",
+    "10. Tap",
+    "11. Groove",
+    "12. Spare",
+]
+
+TOOLS_421 = [
+    "1. RH rough (.12 - .20 per pass)",
+    "2. Open",
+    "3. Finish",
+    "4. Open",
+    "5. RH thread",
+    "6. Open",
+    "7. LH thread",
+    "8. LH finish",
+    "9. Groove (triangle)",
+    "10. Open",
+    "11. LH groove",
+    "12. Spare",
+]
+
+TOOLS_430_431 = [
+    "1. OD",
+    "2. Rough face and OD (WNMG 80 deg insert) 432",
+    "3. Finish face and OD (WNMG 80 deg insert) 331",
+    "4. ID",
+    "5. OD groove",
+    "6. ID rough bore",
+    "7. OD",
+    "8. ID finish bore or drill - watch clearance",
+    "9. OD",
+    "10. ID or drill - watch clearance",
+    "11. OD",
+    "12. ID finish bore or tap",
+]
+
+TOOLS_432_437 = [
+    "1. OD thread RH",
+    "2. Rough (.15 - .25 per pass)",
+    "3. Finish",
+    "4. Backward rough",
+    "5. Backward finish",
+    "6. Center",
+    "7. Drill",
+    "8. Boring bar, TCMT 2 1.5 1-UF",
+    "9. Live tooling for face drill and face tap",
+    "10. End mill",
+    "11. End mill",
+    "12. OD groove / RH thread",
+]
+
+TOOLS_433_434 = [
+    "1. Rough (about .20 per pass)",
+    "2. Center",
+    "3. Finish",
+    "4. Bore (use CDHH120605 HP520B for center chamfers)",
+    "5. RH thread",
+    "6. Drill for tap",
+    "7. LH thread",
+    "8. Finish bore",
+    "9. Groove (triangle)",
+    "10. Tap",
+    "11. Groove",
+    "12. Spare",
+]
+
+TOOLS_435 = [
+    "1. Rough (.18 per pass)",
+    "2. Center",
+    "3. Finish",
+    "4. Bore (use CDHH120605 HP520B for center chamfers)",
+    "5. RH thread",
+    "6. Drill for tap",
+    "7. LH thread",
+    "8. Finish bore",
+    "9. Groove (triangle)",
+    "10. Tap",
+    "11. Groove",
+    "12. Radial live tooling",
+]
+
+TOOLS_436 = [
+    "1. Rough DNMG 442-PR",
+    "2. Finish DNMG 432FW",
+    "3. Reversed DNMG 442-PR",
+    "4. Spot drill",
+    "5. Reversed DNMG 432FW",
+    "6. Boring bar",
+    "7. Empty",
+    "8. Live woodruff cutter",
+    "9. Groove",
+    "10. Live 9/32 end mill",
+    "11. Tool",
+    "12. Live 3/8 end mill",
+]
+
+QTS_300_STEADY_REST_MISC = [
+    "Steady-rest misc values:",
+    "1 = insert comment telling operator to move the rest manually.",
+    "2 = open steady rest.",
+    "3 = close steady rest.",
+    "Any other value = call the rest-move macro.",
+    "Close-rest-after-move values:",
+    "0 = do not output M87 after the move.",
+    "1 = output M87 after the move.",
+]
+
+QTS_300_STEADY_REST_CODES = [
+    "Steady-rest move sequence:",
+    "M05",
+    "M09",
+    "M98 P'A'00'B' (A = current position, B = next position)",
+    "M87",
+    "G98 G4 X1.0",
+    "M00 or M01",
+]
+
+QTS_350_STEADY_REST_MISC = [
+    "Steady-rest misc values:",
+    "1 = insert comment telling operator to move the rest manually.",
+    "2 = open steady rest.",
+    "3 = close steady rest.",
+    "Any other value = call the rest-move macro, for example 10020000.",
+    "Close-rest-after-move values:",
+    "0 = do not output M87 after the move.",
+    "1 = output M87 after the move.",
+    "Always follow a rest move with G98 G4 X1.0.",
+]
+
+HAAS_FLIP_SEQUENCE_30 = [
+    "Flip sequence:",
+    "G91 G28 Z0",
+    "G90 G53 X-30. Y0.",
+    "M00 (turn part and continue)",
+]
 
 MACHINES = {
     "417 Cincinnati Lathe": {
         "machine_type": "Lathe",
         "overview": [
-            "Cincinnati lathe used for shaft work, face-driver work, grooves, and threads.",
-            "Programmer has to pay attention to gear range, face-driver prep, and threading format.",
-            "Use this page as a machine-rule page, not a generic machine description."
+            "Shared 417 / 426 Cincinnati shaft-lathe note set.",
+            "Used for shaft work, face-driver work, grooves, and longhand threading.",
         ],
         "program_behavior": [
-            "1200 RPM max in high gear, 300 RPM max in low gear.",
-            "Uses misc values to force high gear (M42).",
-            "Backwards rough and backwards finish tools are part of the normal tool layout on jobs that need them.",
-            "Face-driver work needs a starter cut to seat the shaft into the drive blades."
+            "1200 RPM max in high gear.",
+            "300 RPM max in low gear.",
+            "Use misc values to force high gear with M42.",
+            "Finish the body in second operation.",
         ],
         "post_limits": [
             "Post supports subprograms.",
-            "Thread pitch address is set to use F, not E.",
+            "Thread pitch address uses F, not E.",
             "Post changed G32 to G33.",
-            "Cantext functions include 5 = return tailstock and 6 = advance tailstock.",
-            "Work offset logic is forced G54 for main spindle and G55 for sub spindle in the post."
+            "Cantext 5 = return tailstock and 6 = advance tailstock.",
         ],
         "code_rules": [
-            "Thread code format @ longhand.",
-            "Equal depths.",
-            "Number of cuts @ 8-15.",
-            "Number of spring cuts usually 1.",
-            "Flank infeed angle @ 0."
+            "Thread format is longhand.",
+            "Use equal thread depths.",
+            "Use 8 - 15 cuts.",
+            "Use 1 spring cut.",
+            "Use 0 flank infeed.",
         ],
         "shop_notes": [
-            "Facing is done with finish tool and shortened end point to stop before center (approx. .5\" per side typically).",
-            "Use misc values to force high gear (M42).",
-            "For groove target: create \"I\" shaped line .500\" from defined shoulder closest to groove.",
-            "Make line lengths .5\" each.",
-            "For finish groove path: select groove tool, feed rate @ .25 and set to inches per minute, spindle @ 0, coolant off, turn lead-in and lead-out off.",
-            "Go to geometry and change at point.",
-            "Select horizontal line, add as a comment after \"/ M00\".",
-            "Always do pulley end first."
+            "Most-used groove tool is TLG-3078L relieved.",
+            "No holders for triangle inserts.",
+            "Facing is done with the finish tool and a shortened endpoint so it stops before center, about .5 per side.",
+            "Siemens shafts: do the pulley end first.",
+            "Siemens shafts: offset the pulley-end face +.030 in Mastercam before aligning the model to Z.",
         ],
         "workholding": [
-            "Siemens shafts: offset pulley end face .030 in Mastercam before aligning model to Z to leave stock on face for cleaning up drive blade marks.",
-            "Starter cut for face drivers: make sure to feed @ .010 for first .1 inch on roughing to seat shaft into drive blades.",
-            "When roughing first side on face drivers, go past left end of part .100\"."
+            "Steady-rest max diameter is 8.0 in.",
+            "Face-driver starter cut: feed .010 for the first .1 in to seat the shaft in the drive blades.",
+            "On first-side face-driver roughing, rough .100 past the end of the part.",
         ],
-        "tooling": [
-            "1. Rough",
-            "2. Finish",
-            "3. Backwards rough",
-            "4. Backwards finish",
-            "5. Groove",
-            "6. Thread"
+        "tooling": TOOLS_417_426,
+        "turning_notes": [
+            "Groove target: create an L-shaped line .500 from the shoulder closest to the groove.",
+            "Make both line legs .500.",
+            "Run a finish toolpath and use those lines as the geometry.",
+            "Set feed to 25 IPM.",
+            "Spindle off.",
+            "Coolant off.",
+            "No lead in or lead out.",
+            "No tool comp.",
+            "Change at point on the horizontal line in chain and add it after / M00.",
         ],
         "posting_cimco": [
-            "Verify gear selection and RPM cap before release.",
-            "Verify any tailstock code output when cantext is used.",
-            "Backplot groove target path and any face-driver starter cut edits.",
-            "Verify longhand threading output and cut count."
-        ],
-        "offset_logic": [
-            "Main spindle / sub spindle work offset behavior follows the post setting.",
-            "Verify actual setup before release."
+            "Verify gear range and RPM cap before release.",
+            "Verify groove path settings, especially 25 IPM, spindle off, coolant off, and no tool comp.",
+            "Verify longhand thread output and cut count.",
         ],
         "mastercam_rules": [
-            "Edit groove geometry exactly as noted for the I-shaped target line method.",
-            "For rough OD toolpath on face-driver work, edit the path manually where needed to control feed and seating cut."
+            "Leave the +.030 pulley-end face stock on Siemens work.",
+            "Manually edit face-driver starter-cut feed where needed.",
         ],
         "special_notes": [
-            "The 1200/300 gear limitation is a hard planning item.",
-            "This machine needs programmer attention, especially on face-driver jobs and thread output."
-        ]
+            "417 and 426 currently share the same shop-rule set.",
+        ],
     },
-
     "421 Mazak QTS-300": {
         "machine_type": "Lathe",
         "overview": [
-            "Primary production Mazak lathe.",
-            "Face-driven machine with important restrictions versus the other QTS-300 machines.",
-            "One of the main daily-use lathes."
+            "Shared 421 / 423 / 424 Mazak QTS-300 family rule set.",
+            "421 is the face-driven machine in this group.",
         ],
         "program_behavior": [
-            "Beginning of program should contain #101, #102, #103.",
-            "Steady rest timing is critical when used.",
-            "All steady rest moves should be followed by G98 G4 X1.0."
+            "Program start must include #101, #102, and #103.",
+            "When roughing for second-op steady-rest prep, 421 can rough to the end of the part.",
         ],
         "post_limits": [
             "Post supports subprograms.",
-            "General tailstock codes exist in the post, but machine-specific note for 421 is that this lathe is face driven.",
-            "Thread pitch address is set to use F, not E.",
-            "Use Mcam work offset logic in the post.",
-            "Post has cantext functions for tailstock advance and return."
+            "General tailstock codes exist in the post, but 421 restrictions still apply.",
+            "Thread pitch address uses F, not E.",
         ],
         "code_rules": [
-            "DO NOT DO ANY END WORK OR TAILSTOCK MOVES.",
-            "Avoid G28 W0 — use safe Z retract.",
-            "Verify G50 spindle limit before release.",
-            "Verify CSS behavior and threading cycles manually."
+            "DO NOT do any end work.",
+            "DO NOT output any tailstock moves.",
+            "If steady-rest code is used, follow the move with G98 G4 X1.0.",
         ],
         "shop_notes": [
-            "Feeds in IPR.",
-            "Default roughing insert = DNMG.",
-            "Default finishing insert = VNMG.",
-            "PF for softer materials; MR / MF / MRR for harder materials; SM for some exotics.",
-            "Use CSS for roughing when appropriate."
+            "421 only: this machine is face driven.",
+            "Finish the face only to -.3 to -.6 diameter.",
         ],
         "workholding": [
-            "This lathe is face driven.",
-            "Starter cut for face drivers: make sure to feed @ .010 for first .1 on roughing to seat shaft into drive blades.",
-            "On rough OD toolpath: edit toolpath, select second point and change feed to .010, add point after second using created line from face of part, edit new point and change feed to .010, edit point after added point and change feed to .015.",
-            "421 can go to end of part when roughing OD for second-side steady-rest preparation."
+            "Face-driver starter cut: feed .010 for the first .1 on roughing to seat the shaft in the drive blades.",
+            "On the rough OD path, edit the early points so the first feed is .010, the added point is .010, and the next point is .015.",
         ],
-        "tooling": [
-            "Tool list 421 (FACE DRIVEN)",
-            "1. R.H. rough (rough passes should take .12-.20 a pass)",
-            "2. open",
-            "3. Finish",
-            "4. open",
-            "5. R.H thread",
-            "6. open",
-            "7. L.H. thread",
-            "8. L.H. finish",
-            "9. Groove (triangle)",
-            "10. Open",
-            "11. L.H. Groove",
-            "12. Spare"
-        ],
+        "tooling": TOOLS_421,
         "posting_cimco": [
-            "Verify #101, #102, #103 at program start.",
-            "Verify no end work or tailstock output.",
-            "Verify any steady-rest code and dwell.",
-            "Backplot full program before release."
-        ],
-        "offset_logic": [
-            "Standard shop lathe offset structure.",
-            "Verify offsets against setup sheet."
-        ],
-        "mastercam_rules": [
-            "Verify stock and origin match the actual face-driven setup.",
-            "Verify groove / thread / roughing edits are made before posting."
+            "Verify #101, #102, and #103 are present.",
+            "Verify there is no end-work output.",
+            "Verify there are no tailstock moves.",
         ],
         "special_notes": [
-            "This machine is not a normal QTS-300 clone from a programming standpoint.",
-            "Treat the face-driven restriction as a hard rule."
-        ]
+            "421 is not interchangeable with 423 / 424 from a programming standpoint.",
+        ],
     },
-
     "423 Mazak QTS-300": {
         "machine_type": "Lathe",
         "overview": [
-            "Primary production Mazak QTS-300.",
-            "Three-jaw chuck machine with steady-rest use and normal endwork capability.",
-            "Very high-value daily programming machine."
+            "Shared 421 / 423 / 424 Mazak QTS-300 family rule set.",
+            "423 is the 3-jaw chuck machine in this group.",
         ],
         "program_behavior": [
-            "Beginning of program should contain #101, #102, #103.",
-            "Steady rest uses macros / misc values.",
-            "All steady rest moves should be followed by G98 G4 X1.0."
+            "Program start must include #101, #102, and #103.",
+            "When roughing for second-op steady-rest prep, rough back 2 in from the chuck.",
         ],
         "post_limits": [
             "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E.",
-            "Use Mcam work offset logic in the post."
+            "Thread pitch address uses F, not E.",
         ],
-        "code_rules": [
-            "Steady Rest Codes (421, 423, 424):",
-            "M05 (Make sure spindle is off)",
-            "M9 (Make sure coolant is off)",
-            "M98 P'A'00'B' (A= Current Position, B= Next Position)",
-            "M87 (Close steady rest)",
-            "G98 G4 X1.0 (X= Dwell For Rest To Close)",
-            "M00 or M01 (Program stop to confirm rest)"
-        ],
+        "code_rules": QTS_300_STEADY_REST_MISC + QTS_300_STEADY_REST_CODES,
         "shop_notes": [
-            "423 can go back 2\" from chuck when roughing OD for second-side steady-rest prep.",
-            "Always try to use steady rest on second side of parts for TIR.",
-            "Steady rest cannot get within 13.75\" of the tailstock, so move tailstock away from part before moving rest to end of part if rest band is within 3\" of end.",
-            "Minimum distance from face of the chuck to tailstock with standard center is about 16\".",
-            "With \"long\" tailstock ______."
+            "Use the steady rest on second operation whenever possible for TIR.",
         ],
         "workholding": [
-            "Specific to 423 (3 jaw chuck).",
-            "423 steady-rest table: Rest Width 1\", Min Width 1.5\", Min S.R. to Chuck 3.75\", Min S.R. to Tailstock 9\", Typ Band Length for Face 3\", Typ Band Distance to Collet 1.5\"."
+            "423 only: 3-jaw chuck.",
+            "Steady rest cannot get within 13.75 in of the tailstock.",
+            "If the rest band is within 3 in of the end, move the tailstock away before moving the rest to the end of the part.",
+            "Minimum distance from the chuck face to the tailstock with a standard center is about 16 in.",
+            "With the long tailstock, minimum distance is about 12 in.",
+            "423 steady-rest table: rest width 1.0 in, min width 1.5 in, min steady-rest to chuck 3.75 in, min steady-rest to tailstock 9.0 in, typical face band length 3.0 in, typical band distance to chuck 1.5 in.",
         ],
-        "tooling": [
-            "Tool list 423, 424",
-            "1. Rough (rough passes should take .12-.20 a pass)",
-            "2. Center",
-            "3. Finish",
-            "4. Drill",
-            "5. RH thread",
-            "6. Drill for tap",
-            "7. LH thread",
-            "8. bore",
-            "9. Groove (triangle)",
-            "10. Tap",
-            "11. Groove",
-            "12. spare"
-        ],
+        "tooling": TOOLS_423_424,
         "posting_cimco": [
-            "Verify #101, #102, #103 at start.",
+            "Verify #101, #102, and #103 are present.",
             "Verify steady-rest macro numbering and dwell.",
-            "Verify tailstock timing on any rest move.",
-            "Backplot full program before release."
-        ],
-        "offset_logic": [
-            "Standard shop lathe offset structure.",
-            "Verify offsets against setup."
-        ],
-        "mastercam_rules": [
-            "Verify stock, origin, and operation order.",
-            "Leave enough rollback on the OD for second-side rest placement."
+            "Verify tailstock clearance before any rest move.",
         ],
         "special_notes": [
-            "423 is one of the core shop machines and deserves full verification every post."
-        ]
+            "423 and 424 share tooling and steady-rest logic, but the reach limits are different.",
+        ],
     },
-
     "424 Mazak QTS-300": {
         "machine_type": "Lathe",
         "overview": [
-            "Primary production Mazak QTS-300.",
-            "Collet-chuck machine with steady-rest use and different reach rules than 423.",
-            "Daily-use lathe."
+            "Shared 421 / 423 / 424 Mazak QTS-300 family rule set.",
+            "424 is the collet machine in this group.",
         ],
         "program_behavior": [
-            "Beginning of program should contain #101, #102, #103.",
-            "Steady rest uses macros / misc values.",
-            "All steady rest moves should be followed by G98 G4 X1.0."
+            "Program start must include #101, #102, and #103.",
+            "When roughing for second-op steady-rest prep, rough back 2 in from the collet.",
         ],
         "post_limits": [
             "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E.",
-            "Use Mcam work offset logic in the post."
+            "Thread pitch address uses F, not E.",
         ],
-        "code_rules": [
-            "Steady Rest Codes (421, 423, 424):",
-            "M05 (Make sure spindle is off)",
-            "M9 (Make sure coolant is off)",
-            "M98 P'A'00'B' (A= Current Position, B= Next Position)",
-            "M87 (Close steady rest)",
-            "G98 G4 X1.0 (X= Dwell For Rest To Close)",
-            "M00 or M01 (Program stop to confirm rest)"
-        ],
+        "code_rules": QTS_300_STEADY_REST_MISC + QTS_300_STEADY_REST_CODES,
         "shop_notes": [
-            "424 can go back 2\" from collet when roughing OD for second-side steady-rest prep.",
-            "Always try to use steady rest on second side of parts for TIR.",
-            "Steady rest cannot get within 5\" of the tailstock, so move tailstock away from part before moving rest to end of part if rest band is within 3\" of end.",
-            "Length from standard length tailstock to the face of the collet is 10\".",
-            "With the \"long\" tailstock, ______.",
-            "The stop inside the collet lets the part go into the collet from .500\" to around 2.500\".",
-            "(10.5\" is probably a safe min. part length)"
+            "Use the steady rest on second operation whenever possible for TIR.",
         ],
         "workholding": [
-            "Specific to 424 (collet chuck).",
-            "424 steady-rest table: Rest Width 1\", Min Width 1.5\", Min S.R. to Collet 3.75\", Min S.R. to Tailstock 3\", Typ Band Length for Face 3\", Typ Band Distance to Collet 1.5\"."
+            "424 only: collet chuck.",
+            "Steady rest cannot get within 5.0 in of the tailstock.",
+            "If the rest band is within 3 in of the end, move the tailstock away before moving the rest to the end of the part.",
+            "Distance from a standard tailstock to the collet face is 10 in.",
+            "With the long tailstock, distance to the collet face is 6 in.",
+            "Collet stop lets the part enter the collet from .500 to about 2.500.",
+            "Safe minimum part length is about 10.5 in.",
+            "424 steady-rest table: rest width 1.0 in, min width 1.5 in, min steady-rest to collet 3.75 in, min steady-rest to tailstock 3.0 in, typical face band length 3.0 in, typical band distance to collet 1.5 in.",
         ],
-        "tooling": [
-            "Tool list 423, 424",
-            "1. Rough (rough passes should take .12-.20 a pass)",
-            "2. Center",
-            "3. Finish",
-            "4. Drill",
-            "5. RH thread",
-            "6. Drill for tap",
-            "7. LH thread",
-            "8. bore",
-            "9. Groove (triangle)",
-            "10. Tap",
-            "11. Groove",
-            "12. spare"
-        ],
+        "tooling": TOOLS_423_424,
         "posting_cimco": [
-            "Verify #101, #102, #103 at start.",
+            "Verify #101, #102, and #103 are present.",
             "Verify steady-rest macro numbering and dwell.",
-            "Verify collet / tailstock clearance assumptions.",
-            "Backplot full program before release."
-        ],
-        "offset_logic": [
-            "Standard shop lathe offset structure.",
-            "Verify offsets against setup."
-        ],
-        "mastercam_rules": [
-            "Verify stock, origin, and operation order.",
-            "Leave enough rollback on the OD for second-side rest placement."
+            "Verify collet stop, tailstock reach, and part length before release.",
         ],
         "special_notes": [
-            "424 reach and collet-stop realities matter when planning the setup."
-        ]
+            "424 planning is driven by collet-stop range and shorter tailstock clearance.",
+        ],
     },
-
     "426 Cincinnati Lathe": {
         "machine_type": "Lathe",
         "overview": [
-            "Uses the same programmer note set as 417 in the uploaded notes/post group.",
-            "Treat as a Cincinnati lathe page sharing the same core restrictions until you split it further."
+            "Shared 417 / 426 Cincinnati shaft-lathe note set.",
+            "No machine-specific differences were confirmed in the uploaded note file.",
         ],
         "program_behavior": [
-            "1200 RPM max in high gear, 300 RPM max in low gear.",
-            "Uses misc values to force high gear (M42)."
+            "1200 RPM max in high gear.",
+            "300 RPM max in low gear.",
+            "Use misc values to force high gear with M42.",
+            "Finish the body in second operation.",
         ],
         "post_limits": [
             "Post supports subprograms.",
-            "Thread pitch address is set to use F, not E.",
-            "Post changed G32 to G33."
+            "Thread pitch address uses F, not E.",
+            "Post changed G32 to G33.",
+            "Cantext 5 = return tailstock and 6 = advance tailstock.",
         ],
         "code_rules": [
-            "Use the same thread / face-driver rules as 417 unless machine-specific differences are confirmed."
+            "Thread format is longhand.",
+            "Use equal thread depths.",
+            "Use 8 - 15 cuts.",
+            "Use 1 spring cut.",
+            "Use 0 flank infeed.",
         ],
         "shop_notes": [
-            "Review 417/426 shared note page for groove target, threading, and Siemens shaft prep."
+            "Most-used groove tool is TLG-3078L relieved.",
+            "No holders for triangle inserts.",
+            "Facing is done with the finish tool and a shortened endpoint so it stops before center, about .5 per side.",
+            "Siemens shafts: do the pulley end first.",
+            "Siemens shafts: offset the pulley-end face +.030 in Mastercam before aligning the model to Z.",
         ],
         "workholding": [
-            "Face-driver and shaft-prep logic may apply depending on setup."
+            "Steady-rest max diameter is 8.0 in.",
+            "Face-driver starter cut: feed .010 for the first .1 in to seat the shaft in the drive blades.",
+            "On first-side face-driver roughing, rough .100 past the end of the part.",
         ],
-        "tooling": [
-            "Shared with 417 until separated."
+        "tooling": TOOLS_417_426,
+        "turning_notes": [
+            "Groove target: create an L-shaped line .500 from the shoulder closest to the groove.",
+            "Make both line legs .500.",
+            "Run a finish toolpath and use those lines as the geometry.",
+            "Set feed to 25 IPM.",
+            "Spindle off.",
+            "Coolant off.",
+            "No lead in or lead out.",
+            "No tool comp.",
         ],
         "posting_cimco": [
-            "Verify machine-specific limits before release."
-        ],
-        "offset_logic": [
-            "Verify actual setup offsets."
-        ],
-        "mastercam_rules": [
-            "Use the 417 logic as the baseline."
+            "Verify gear range and RPM cap before release.",
+            "Verify groove path settings before release.",
+            "Verify longhand thread output and cut count.",
         ],
         "special_notes": [
-            "Split this into its own page later if new notes are captured."
-        ]
+            "417 and 426 currently use the same programmer note set.",
+        ],
     },
-
     "430 Mazak QTS-250": {
         "machine_type": "Lathe",
         "overview": [
-            "Mazak QTS-250 family machine.",
-            "These machines do not have a steady rest."
+            "Shared 430 / 431 Mazak QTS-250 note set.",
+            "These machines do not have a steady rest.",
         ],
         "program_behavior": [
-            "Max spindle speed [G50] W/ Tailstock: 2000.",
-            "Max spindle speed [G50] W/O Tailstock: 1000."
+            "With tailstock: G50 max 2000 RPM.",
+            "Without tailstock: G50 max 1000 RPM.",
         ],
         "post_limits": [
-            "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E."
-        ],
-        "code_rules": [
-            "Reference for program math from Flowserve program 10822001.",
-            "102 is part OAL.",
-            "103 is baseline print part length – part you are making."
+            "Reference math note: #102 = part OAL.",
+            "Reference math note: #103 = print part length.",
         ],
         "shop_notes": [
-            "These machines do not have a steady rest."
+            "No steady rest on this machine.",
         ],
-        "workholding": [
-            "Verify tailstock use before final spindle limit selection."
-        ],
-        "tooling": [
-            "1. OD",
-            "2. Rough Face & OD (WNMG 80 Deg Inserts) 432",
-            "3. Finish Face & OD (WNMG 80 Deg Inserts) 331",
-            "4. ID",
-            "5. OD Groove",
-            "6. ID Rough Bore",
-            "7. OD",
-            "8. ID Finish Bore or Drill (Watch for Clearance)",
-            "9. OD",
-            "10. ID or Drill (Watch for Clearance)",
-            "11. OD",
-            "12. ID Finish Bore or Tap"
+        "tooling": TOOLS_430_431,
+        "turning_notes": [
+            "Watch clearance on ID finish bore, drill, and tap tools.",
         ],
         "posting_cimco": [
-            "Verify G50 spindle limit based on tailstock condition.",
-            "Verify any math driven by #102 / #103 variables."
-        ],
-        "offset_logic": [
-            "Verify actual setup offsets."
-        ],
-        "mastercam_rules": [
-            "Watch clearance on ID finish bore / drill tools."
+            "Verify the G50 limit matches whether the tailstock is in use.",
         ],
         "special_notes": [
-            "No steady-rest support on this machine."
-        ]
+            "430 and 431 share the same uploaded note set.",
+        ],
     },
-
     "431 Mazak QTS-250": {
         "machine_type": "Lathe",
         "overview": [
-            "Mazak QTS-250 family machine.",
-            "These machines do not have a steady rest."
+            "Shared 430 / 431 Mazak QTS-250 note set.",
+            "These machines do not have a steady rest.",
         ],
         "program_behavior": [
-            "Max spindle speed [G50] W/ Tailstock: 2000.",
-            "Max spindle speed [G50] W/O Tailstock: 1000."
+            "With tailstock: G50 max 2000 RPM.",
+            "Without tailstock: G50 max 1000 RPM.",
         ],
         "post_limits": [
-            "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E."
-        ],
-        "code_rules": [
-            "Reference for program math from Flowserve program 10822001.",
-            "102 is part OAL.",
-            "103 is baseline print part length – part you are making."
+            "Reference math note: #102 = part OAL.",
+            "Reference math note: #103 = print part length.",
         ],
         "shop_notes": [
-            "These machines do not have a steady rest."
+            "No steady rest on this machine.",
         ],
-        "workholding": [
-            "Verify tailstock use before final spindle limit selection."
-        ],
-        "tooling": [
-            "1. OD",
-            "2. Rough Face & OD (WNMG 80 Deg Inserts) 432",
-            "3. Finish Face & OD (WNMG 80 Deg Inserts) 331",
-            "4. ID",
-            "5. OD Groove",
-            "6. ID Rough Bore",
-            "7. OD",
-            "8. ID Finish Bore or Drill (Watch for Clearance)",
-            "9. OD",
-            "10. ID or Drill (Watch for Clearance)",
-            "11. OD",
-            "12. ID Finish Bore or Tap"
+        "tooling": TOOLS_430_431,
+        "turning_notes": [
+            "Watch clearance on ID finish bore, drill, and tap tools.",
         ],
         "posting_cimco": [
-            "Verify G50 spindle limit based on tailstock condition.",
-            "Verify any math driven by #102 / #103 variables."
-        ],
-        "offset_logic": [
-            "Verify actual setup offsets."
-        ],
-        "mastercam_rules": [
-            "Watch clearance on ID finish bore / drill tools."
+            "Verify the G50 limit matches whether the tailstock is in use.",
         ],
         "special_notes": [
-            "No steady-rest support on this machine."
-        ]
+            "430 and 431 share the same uploaded note set.",
+        ],
     },
-
     "432 Mazak QTS-450 MY": {
         "machine_type": "Lathe",
         "overview": [
-            "Mazak QTS-450 MY with turning and live-tool work.",
-            "Used for turning, threading, grooves, face drill/tap, and keyway / woodruff support.",
-            "One of the most important multi-use lathes to capture in the app."
+            "Shared 432 / 437 Mazak QTS-450 MY note set.",
+            "Turning and live-tool machine with steady-rest, keyway, drill, and tap use.",
         ],
         "program_behavior": [
-            "Max diameter for steady rest to clamp on is 7.5\".",
-            "Steady rest can be set flush against tailstock.",
-            "Steady rest center locates 39.5\" from chuck end on op1.",
-            "Rest location 37.5\" from chuck end on op2 on one note page, and 35.5\" from chuck end on op2 on a later updated steady-rest page (changed from 37.5 R.W. 1/22/2026).",
-            "Cut rest band 2\"-5\" from the tail stock end."
+            "When roughing first side, stop 2 in from the end with gripper jaws.",
+            "When roughing first side with hard jaws on a very long part, stop 4 in from the end.",
         ],
         "post_limits": [
-            "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E.",
             "Machine will not read G91 on incremental moves.",
-            "Use address substitutions for incremental data: X-axis = Address U, Z-axis = Address W, C-axis = Address H, Y-axis = Address V."
+            "Use U for X incremental moves.",
+            "Use W for Z incremental moves.",
+            "Use H for C incremental moves.",
+            "Use V for Y incremental moves.",
         ],
         "code_rules": [
-            "LOCAL SUB PROGRAM FORMAT",
-            "Prep code as need",
-            "M98 Q0001 (M98=JUMP TO SUB PROGRAM, Q=LINE NUMBER TO JUMP TO, L is number of times to repeat )",
-            "(Code as needed for part)",
-            "(\"H\" can be used for incremental c axis rotation if needed)",
-            "M30 (end of program)",
-            "At the end of the program",
-            "N0001 ( line number to jump to )",
-            "(Code as needed to cut part )",
-            "M99 (jump back to M97, P can be used if need to jump back to different sequence )",
-            "% (end of program, only put at end of last sub program)",
-            "SUB PROGRAM FORMAT (NOT LOCAL)",
-            "M98 P15 Q1 ( P is program number, Q is the sequence number to jump to, L is number of time to repeat )",
-            "M99 (P can be used if need to jump back to different sequence number )",
-            "%"
+            "Every C-axis angle must include a decimal point.",
+            "First C move format: M200, G0 C90.0, M210.",
+            "Later C moves: M212, G0 C##.#, M210.",
+            "Local subprogram format uses M98 Q#### and returns with M99.",
+            "Non-local subprogram format uses M98 P## Q# and returns with M99.",
         ],
         "shop_notes": [
-            "Tool list:",
-            "1. OD thread RH",
-            "2. Rough (rough passes should take .15 - .25 a pass)",
-            "3. Finish",
-            "4. Backward rough",
-            "5. Backward finish",
-            "6. Center",
-            "7. Drill",
-            "8. Boring bar, TCMT 2 1.5 1-UF",
-            "9. Live tooling, USE for face drills and face tap",
-            "10. END MILL",
-            "11. END MILL",
-            "12. OD groove / RH thread",
-            "Max diameter to put through spindle: 4.5\"",
-            "Max grip length of chuck jaws: 3.55\"",
-            "End mills he has collets for as of 1/9/2024: 3/16, 6mm, 1/4, 3/8, 1/2 (does he have a 5/16 holder?)",
-            "For milling keyway use tool number 10.6 or 11.6.",
-            "TAP or FACE DRILL HOLES USE T9.11",
-            "DO OFF CENTER END WORK FIRST (BEFORE MILLING KEYWAYS).",
-            "NOTE: If doing woodruff keys, do them below the part or the x will over travel when the y moves."
+            "Recenter the second end every time.",
         ],
         "workholding": [
-            "When roughing OD on first side, rough to biggest diameter and stop 2\" from end of part when gripper jaws. 4\" from chuck for hard jaws (very long part).",
-            "Specific to second operation on large diameter parts, if the section that was chucked on the first operation is larger than 10-10.5 inches it could strike the right side of the steady rest on the second operation.",
-            "To get around this the operator will manually center the second end, start by turning the chucked section down to near the steady rest diameter then face and recenter.",
-            "Note: C angle must have a decimal point."
+            "Steady-rest max clamp diameter is 7.5 in.",
+            "Steady rest can be set flush to the tailstock.",
+            "Cut the rest band 2 - 5 in from the tailstock end.",
+            "If the first-op chucking diameter is larger than about 10 - 10.5 in, it can hit the right side of the steady rest in second op.",
+            "If that crash risk exists, manually center the second end, turn the chucking diameter down near the steady-rest diameter, then face and recenter.",
+            "Max diameter through the spindle is 4.5 in.",
+            "Max chuck-jaw grip length is 3.55 in.",
         ],
-        "tooling": [
-            "See tool list in shop notes."
+        "tooling": TOOLS_432_437,
+        "turning_notes": [
+            "Large-diameter second-op parts are the biggest steady-rest crash risk on this machine family.",
+        ],
+        "live_tooling_notes": [
+            "Use T10.6 or T11.6 for milling keyways.",
+            "Use T9.11 for tap or face-drill work.",
+            "Do off-center end work before milling keyways.",
+            "If cutting a woodruff key, cut it below the part or X can overtravel when Y moves.",
+        ],
+        "milling_notes": [
+            "Collets on hand were noted for 3/16, 6 mm, 1/4, 3/8, and 1/2.",
         ],
         "posting_cimco": [
-            "Verify any subprogram format carefully.",
-            "Verify no G91 assumptions exist in code.",
-            "Verify steady-rest locations against current setup sheet.",
-            "Verify live-tool and off-center work sequence before release."
-        ],
-        "offset_logic": [
-            "Verify setup zero and any rest location from the zero point."
-        ],
-        "mastercam_rules": [
-            "If using local subprogram logic, keep jump sequence clean and intentional.",
-            "For incremental output, remember the machine does not read G91 and uses address substitutions instead."
+            "Verify no G91 output is used.",
+            "Verify every C move includes a decimal.",
+            "Verify off-center work is sequenced before keyway milling.",
         ],
         "special_notes": [
-            "There is a note conflict on op2 rest location (37.5 vs 35.5). Use the latest shop-confirmed number tomorrow before relying on the app.",
-            "This page is intentionally detailed because this machine does a lot."
-        ]
+            "Uploaded notes had changing steady-rest location values over time. Confirm actual teach positions at the machine before trusting an old program.",
+        ],
     },
-
+    "437 Mazak QTS-450 MY": {
+        "machine_type": "Lathe",
+        "overview": [
+            "Shared 432 / 437 Mazak QTS-450 MY note set.",
+            "Turning and live-tool machine with steady-rest, keyway, drill, and tap use.",
+        ],
+        "program_behavior": [
+            "When roughing first side, stop 2 in from the end with gripper jaws.",
+            "When roughing first side with hard jaws on a very long part, stop 4 in from the end.",
+        ],
+        "post_limits": [
+            "Machine will not read G91 on incremental moves.",
+            "Use U for X incremental moves.",
+            "Use W for Z incremental moves.",
+            "Use H for C incremental moves.",
+            "Use V for Y incremental moves.",
+        ],
+        "code_rules": [
+            "Every C-axis angle must include a decimal point.",
+            "First C move format: M200, G0 C90.0, M210.",
+            "Later C moves: M212, G0 C##.#, M210.",
+            "Local subprogram format uses M98 Q#### and returns with M99.",
+            "Non-local subprogram format uses M98 P## Q# and returns with M99.",
+        ],
+        "shop_notes": [
+            "Recenter the second end every time.",
+        ],
+        "workholding": [
+            "Steady-rest max clamp diameter is 7.5 in.",
+            "Steady rest can be set flush to the tailstock.",
+            "Cut the rest band 2 - 5 in from the tailstock end.",
+            "If the first-op chucking diameter is larger than about 10 - 10.5 in, it can hit the right side of the steady rest in second op.",
+            "If that crash risk exists, manually center the second end, turn the chucking diameter down near the steady-rest diameter, then face and recenter.",
+            "Max diameter through the spindle is 4.5 in.",
+            "Max chuck-jaw grip length is 3.55 in.",
+        ],
+        "tooling": TOOLS_432_437,
+        "turning_notes": [
+            "Large-diameter second-op parts are the biggest steady-rest crash risk on this machine family.",
+        ],
+        "live_tooling_notes": [
+            "Use T10.6 or T11.6 for milling keyways.",
+            "Use T9.11 for tap or face-drill work.",
+            "Do off-center end work before milling keyways.",
+            "If cutting a woodruff key, cut it below the part or X can overtravel when Y moves.",
+        ],
+        "milling_notes": [
+            "Collets on hand were noted for 3/16, 6 mm, 1/4, 3/8, and 1/2.",
+        ],
+        "posting_cimco": [
+            "Verify no G91 output is used.",
+            "Verify every C move includes a decimal.",
+            "Verify off-center work is sequenced before keyway milling.",
+        ],
+        "special_notes": [
+            "Uploaded notes had changing steady-rest location values over time. Confirm actual teach positions at the machine before trusting an old program.",
+        ],
+    },
     "433 Mazak QTS-350": {
         "machine_type": "Lathe",
         "overview": [
-            "Mazak QTS-350 family machine with steady-rest support.",
-            "Used for standard shaft processing with rough, finish, drilling, threads, grooves, and tap work."
+            "Shared 433 / 434 Mazak QTS-350 steady-rest process.",
+            "433 is the chuck version in this group.",
         ],
         "program_behavior": [
-            "These machines have 4 teachable locations for rest moves and multiple sub programs to move them from each position.",
-            "Rest move sub program numbers should start with current rest location, then 2 zeros, then next rest location followed by 4 zeros.",
-            "Example: 2003000. This will move the steady rest from position 2 to position 3."
+            "Standard process: cut rest band, close rest, retract tailstock, do end work, advance tailstock, rough back for the second-op rest band, then finish OD, grooves, and threads.",
+            "Rest-move subprogram numbers start with the current rest location, then 00, then the next location, then 0000.",
+            "Example: 20030000 moves the rest from position 2 to position 3.",
         ],
         "post_limits": [
-            "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E."
+            "Thread pitch address uses F, not E.",
         ],
-        "code_rules": [
-            "Steady Rest Misc Values",
-            "Macro # definitions",
-            "1 = inserts comments to tell operator to manually move rest.",
-            "2 = inserts code to open steady rest",
-            "3 = inserts code to close steady rest",
-            "Otherwise enter macro to move rest (example: 10020000)",
-            "Close rest after move",
-            "0 = will not input M87 after moving steady rest",
-            "1 = Will input M87 after moving steady rest",
-            "All steady rests moves should always be followed by: G98 G4 X1.0"
-        ],
+        "code_rules": QTS_350_STEADY_REST_MISC,
         "shop_notes": [
-            "Tool list:",
-            "1. Rough (rough passes should take about .20 a pass)",
-            "2. Center",
-            "3. Finish",
-            "4. Bore (Use CDHH120605 HP520B for center chamfers)",
-            "5. RH thread",
-            "6. Drill for tap",
-            "7. LH thread",
-            "8. Finish bore",
-            "9. Groove (triangle)",
-            "10. Tap",
-            "11. Groove",
-            "12. spare",
-            "Standard process:",
-            "Cut rest band (3\" long, start 5.5 from end of part)",
-            "Close steady rest",
-            "Stop spindle, stop coolant",
-            "Retract tailstock",
-            "Do all end work",
-            "Advance tailstock",
-            "Rough OD back from biggest diameter to 5\" from end of part in chuck/collet",
-            "This will be used for rest band on second side",
-            "Rough and finish OD",
-            "Cut any grooves",
-            "Do all threads"
+            "First-side rest band is 3.0 in long and starts 5.5 in from the end of the part.",
+            "After cutting the rest band, stop spindle and coolant before closing the rest if needed.",
+            "Use the steady rest on second operation whenever possible for TIR.",
         ],
         "workholding": [
-            "When roughing make sure to go back far enough on biggest diameter so they have somewhere to put steady rest on second side.",
-            "Chuck (433): can rough OD back 2\"-3\" from end of part if using jaw stop.",
-            "Collet (434): can rough OD back 3\"-6\" from end of part depending on stop used.",
-            "Always try to use steady rest on second side of parts for TIR.",
-            "Rest width: 1.75\". Minimum to shoulder: 1.50\"."
+            "Rest width is 1.75 in.",
+            "Minimum shoulder to the rest band is 1.50 in.",
+            "433 only: chuck setup can rough back 2 - 3 in from the end when using a jaw stop.",
         ],
-        "tooling": [
-            "See tool list in shop notes."
+        "tooling": TOOLS_433_434,
+        "drilling_notes": [
+            "For drilling and tapping work, use the smaller center and the bore tool to make the chamfer.",
+            "If using metric taps, verify the posted feed is still in inch units.",
         ],
         "posting_cimco": [
-            "Verify steady-rest subprogram numbering.",
-            "Verify G98 G4 X1.0 appears after rest moves.",
-            "Verify tailstock / spindle / coolant order around rest handling."
-        ],
-        "offset_logic": [
-            "Verify actual setup and rest location origin."
-        ],
-        "mastercam_rules": [
-            "Build enough rollback on the largest OD for second-side rest use."
+            "Verify steady-rest macro numbering.",
+            "Verify G98 G4 X1.0 appears after every rest move.",
+            "Verify tailstock, spindle, and coolant order around the rest sequence.",
         ],
         "special_notes": [
-            "This family has a more formal rest-motion structure than some other lathes."
-        ]
+            "433 and 434 share the same process flow. The main difference is how far back you can rough for the second-op rest band.",
+        ],
     },
-
     "434 Mazak QTS-350": {
         "machine_type": "Lathe",
         "overview": [
-            "Mazak QTS-350 family machine with steady-rest support.",
-            "Collet variant / collet-use notes differ from 433."
+            "Shared 433 / 434 Mazak QTS-350 steady-rest process.",
+            "434 is the collet version in this group.",
         ],
         "program_behavior": [
-            "These machines have 4 teachable locations for rest moves and multiple sub programs to move them from each position.",
-            "Rest move sub program numbers should start with current rest location, then 2 zeros, then next rest location followed by 4 zeros."
+            "Standard process: cut rest band, close rest, retract tailstock, do end work, advance tailstock, rough back for the second-op rest band, then finish OD, grooves, and threads.",
+            "Rest-move subprogram numbers start with the current rest location, then 00, then the next location, then 0000.",
+            "Example: 20030000 moves the rest from position 2 to position 3.",
         ],
         "post_limits": [
-            "Post supports subprograms.",
-            "General tailstock codes exist in the post.",
-            "Thread pitch address is set to use F, not E."
+            "Thread pitch address uses F, not E.",
         ],
-        "code_rules": [
-            "Use the same rest misc-value structure as 433.",
-            "All steady rest moves should always be followed by G98 G4 X1.0."
-        ],
+        "code_rules": QTS_350_STEADY_REST_MISC,
         "shop_notes": [
-            "Use the 433/434 processing standard unless setup requires otherwise."
+            "First-side rest band is 3.0 in long and starts 5.5 in from the end of the part.",
+            "After cutting the rest band, stop spindle and coolant before closing the rest if needed.",
+            "Use the steady rest on second operation whenever possible for TIR.",
         ],
         "workholding": [
-            "Collet (434): can rough OD back 3\"-6\" from end of part depending on stop used.",
-            "Rest width: 1.75\". Minimum to shoulder: 1.50\"."
+            "Rest width is 1.75 in.",
+            "Minimum shoulder to the rest band is 1.50 in.",
+            "434 only: collet setup can rough back 3 - 6 in from the end depending on the stop used.",
         ],
-        "tooling": [
-            "Shared 433/434 tool list."
+        "tooling": TOOLS_433_434,
+        "drilling_notes": [
+            "For drilling and tapping work, use the smaller center and the bore tool to make the chamfer.",
+            "If using metric taps, verify the posted feed is still in inch units.",
         ],
         "posting_cimco": [
-            "Verify rest motion, tailstock timing, and end-work order."
-        ],
-        "offset_logic": [
-            "Verify actual setup and rest location origin."
-        ],
-        "mastercam_rules": [
-            "Leave enough rollback for second-side rest use."
+            "Verify steady-rest macro numbering.",
+            "Verify G98 G4 X1.0 appears after every rest move.",
+            "Verify tailstock, spindle, and coolant order around the rest sequence.",
         ],
         "special_notes": [
-            "Split this page further later if 434-specific notes keep growing."
-        ]
+            "433 and 434 share the same process flow. The main difference is how far back you can rough for the second-op rest band.",
+        ],
     },
-
+    "435 Okuma LB3000": {
+        "machine_type": "Lathe",
+        "overview": [
+            "Okuma LB3000 standard lathe note set.",
+            "Includes standard turning tools plus radial live tooling at T12.",
+        ],
+        "code_rules": [
+            "Do not start the program with G13.",
+            "Program start must include G270, CLEAR, and DRAW.",
+            "Every G74 drill cycle must include a D value for peck.",
+        ],
+        "tooling": TOOLS_435,
+        "live_tooling_notes": [
+            "If cutting a woodruff key, cut it below the part or X can overtravel when Y moves.",
+        ],
+        "posting_cimco": [
+            "Verify G13 is removed from the start of the program.",
+            "Verify G270, CLEAR, and DRAW are present at start.",
+            "Verify every G74 cycle includes a D peck value.",
+        ],
+        "special_notes": [
+            "435 is a new machine entry added from the uploaded note file.",
+        ],
+    },
     "436 Okuma LB4000": {
         "machine_type": "Lathe",
         "overview": [
-            "Okuma LB4000 EX with Y-axis, live angle holder, tailstock, and steady-rest support.",
-            "Used for turning plus live-tool work including woodruff and end mill operations."
+            "Okuma LB4000 with steady-rest support and live-tool capability.",
         ],
         "program_behavior": [
-            "Steady rest is 2.5\" wide on this machine.",
-            "Steady rest zero location is face of shaft.",
-            "Watch for rest clearance with turret when open.",
-            "Watch for rest clearance with tailstock.",
-            "Max sub spindle speed 6000 RPM."
-        ],
-        "post_limits": [
-            "Post includes machining mode designation functions G270/G271/G272.",
-            "Post has coolant behavior notes: coolant is always needed before the spindle starts otherwise it heats up quickly and may burn off.",
-            "Post has gear selection configured for lathe only.",
-            "Post coolant format is separate lines."
-        ],
-        "code_rules": [
-            "Programs must start with a letter A. ( I guess this was changed to T at some point, remember to ask steve about this R.W. 4/8/25)",
-            "Program might have to start with",
-            "G13",
-            "G270",
-            "CLEAR",
-            "DRAW",
-            "NOTE: return y to 0 before end of operation. R.W. 1/12/2026",
-            "NOTE: WHEN MILLING THE X ARE IN RADIUS R.W. 4/8/2025"
-        ],
-        "shop_notes": [
-            "1. Rough  DNMG 442-PR",
-            "2. Finish  DNMG 432FW",
-            "3. REVERSED  DNMG-442-PR",
-            "4. Spot Drill",
-            "5. REVERSED  DNMG432FW",
-            "6. Boring Bar",
-            "7. Empty",
-            "8. Live – WOODRUFF CUTTER",
-            "9. Groove",
-            "10. LIVE- 9/32 END MILL",
-            "11. tool",
-            "12. Live – 3/8 END MILL",
-            "NOTE: if doing woodruff keys, do them below the part or the x will over travel when the y moves. (Y- number)",
-            "Program can not start with a G13 (upper turret) Delete from program. Robert w. 3/20/2026",
-            "Program have to start with",
-            "G270",
-            "CLEAR",
-            "DRAW",
-            "A G74 drill cycle must have a D value, (peck amount) Robert w. 3/20/2026"
+            "Steady-rest width is 2.5 in.",
+            "Steady-rest zero is the face of the shaft.",
+            "Sub spindle max is 6000 RPM.",
         ],
         "workholding": [
-            "Watch rest clearance with turret and tailstock before release."
+            "Watch steady-rest clearance with the turret when the rest is open.",
+            "Watch steady-rest clearance with the tailstock.",
         ],
-        "tooling": [
-            "See shop notes for current loaded pattern."
+        "tooling": TOOLS_436,
+        "live_tooling_notes": [
+            "When milling, X is in radius.",
+            "Return Y to 0 before the end of the operation.",
+            "If cutting a woodruff key, cut it below the part or X can overtravel when Y moves.",
         ],
         "posting_cimco": [
-            "Verify start format tomorrow before trusting old notes because one note conflicts on G13/A/T start behavior.",
-            "Verify G74 peck cycles include D value.",
-            "Verify coolant starts before spindle."
+            "Verify steady-rest zero and clearance before release.",
+            "Verify milling output uses radius X values.",
+            "Verify Y returns to 0 before the operation ends.",
         ],
-        "offset_logic": [
-            "Steady-rest zero location is face of shaft."
-        ],
-        "mastercam_rules": [
-            "When milling, X values are in radius.",
-            "Return Y to 0 before end of operation."
-        ],
-        "special_notes": [
-            "There is a conflict between older and newer start-code notes. Treat the latest confirmed shop practice as the source of truth tomorrow."
-        ]
     },
-
     "652 Makino A51": {
         "machine_type": "Mill",
         "overview": [
-            "Makino A51 4X HMC with strict machine-specific rules.",
-            "This machine is rule-heavy and should always override generic mill habits."
+            "Makino A51 4-axis HMC with strict machine-specific posting rules.",
         ],
         "program_behavior": [
-            "Programs format O####.NC.",
-            "Subprogram type in the post is external sub programs (M98).",
-            "Subprogram numbering starts at 1000.",
-            "TWP (G68.2) is off in the post."
+            "Program format is O####.NC.",
+            "M60 at the start and end of the program.",
         ],
         "post_limits": [
-            "THE G95 FEED PER REV CODE CAUSES THE MILL TO ALARM OUT.",
-            "WHEN USING TOOL OFFSETS (G41/G42), PROGRAM SHOULD BE TO THE CENTER LINE OF THE TOOL (WEAR IN MASTERCAM).",
-            "THE OFFSETS THE M11 (UNLOCK), B0, M10 (LOCK), B NEEDS TO BE ZERO.",
-            "FOR OFFSETS THE H# IS THE TOOL NUMBER, FOR D# ITS THE TOOL NUMBER+100",
-            "M26 CODE IS FOR THROUGH SPINDLE COOLANT"
+            "Do not output G95. It alarms this mill.",
+            "Do not output B moves in the program.",
+            "Use M26 for through-spindle coolant.",
+            "H offset = tool number.",
+            "D offset = tool number + 100.",
         ],
         "code_rules": [
-            "WHEN TAPING CAN BE IN FEED PER REV OR FEED PER MIN, JUST MUST HAVE THE CORRECT G CODE FOR FEED.SEE HIDE CODE, ROBERT",
-            "M60 AT START AND ENDING",
-            "The program should not have an B moves."
+            "If using G41 or G42, program to the tool centerline and use wear.",
+            "Tapping can be feed per rev or feed per minute, but the feed mode must match the cycle.",
+            "Keep the B axis at B0. Unlock with M11 and lock with M10 if needed.",
         ],
         "shop_notes": [
-            "As of 2/6/2025:",
-            "When running from the vice, the left end (left side of vice) is normally the part origin. This is because the left end has a stop he can push the part against.",
-            "The face on the left side is normally G54, the body diameter is G55, the face on the right end is G56.",
-            "In the machine only, the left (G54) is B90, the body keyway (G55) is B180, the right end (G56) is B270."
-        ],
-        "workholding": [
-            "Verify fixture orientation carefully.",
-            "From the perspective of the \"top\" view and with the \"top\" plane set as the WCS, the part should be as shown in the note images.",
-            "The left end of the part is on the right side, the body keyway is on the \"up\" side of the screen."
-        ],
-        "tooling": [
-            "H = tool number",
-            "D = tool number + 100"
-        ],
-        "posting_cimco": [
-            "Verify no G95 appears.",
-            "Verify no B moves appear.",
-            "Verify H and D output.",
-            "Verify M26 and M60 placement.",
-            "Verify subprogram calls if used."
+            "In the vise, the left end is normally the origin because there is a stop there.",
         ],
         "offset_logic": [
-            "G54 = left end face",
-            "G55 = body diameter / body keyway",
-            "G56 = right end face",
-            "In machine terms the corresponding B positions are B90 / B180 / B270."
+            "G54 = left end.",
+            "G55 = body.",
+            "G56 = right end.",
+            "Machine mapping: G54 = B90, G55 = B180, G56 = B270.",
         ],
         "mastercam_rules": [
-            "A plane is made on each of the faces that you are milling on, the planes need to have their \"z\" in line with the spindle/tool.",
-            "When viewed from the perspective of the spindle/tool the +y is up and +x is to the right.",
-            "The \"left end\" plane has the offset changed to 0, the body plane has the offset changed to 1, the right end plane has the offset set as 2."
+            "Set the part from the top view with Top as the WCS.",
+            "Left end of the part sits on the right side of the screen.",
+            "Body keyway sits on the top side of the screen.",
+            "Create one plane for each machined face with Z aligned to the spindle.",
+            "Viewed from the spindle, +Y is up and +X is right.",
+            "Set left end plane offset to 0, body plane offset to 1, and right end plane offset to 2.",
         ],
-        "special_notes": [
-            "This machine should always be checked manually in CIMCO before release."
-        ]
+        "posting_cimco": [
+            "Verify no G95 output exists.",
+            "Verify no B moves exist.",
+            "Verify H and D offsets match the tool numbers.",
+            "Verify M26 and M60 placement.",
+        ],
     },
-
     "654 Okuma Genos M560-V": {
         "machine_type": "Mill",
         "overview": [
-            "Okuma Genos M560-V mill with rotary chuck and V-block use.",
-            "Important machine for keyways, flats, hexes, and rotated work."
+            "Okuma Genos M560-V for rotary chuck, V-block, flats, hexes, and rotated work.",
         ],
         "program_behavior": [
-            "PROGRAMS FORMAT EM####.MIN",
-            "X0 RIGHT END FOR VBLOCKS, ON THE LEFT FOR THE ROTORY CHUCK",
-            "Y0 CENTER LINE OF SHAFT",
-            "Z0 TOP OF DIAMETER. (AS OF 10/14/2024 THIS IS FOR THE ROTORY FIXTURE ALSO R.W. )",
-            "2/12/2025 MAX SPINDLE SPEED 12000 RPM NOT THE 15000 WE HAD. R.W."
-        ],
-        "post_limits": [
-            "Post supports subprograms.",
-            "6/27/2025 ROBERT W.- EDIT TO POST OUT \"G10\" AFTER \"G11\" COORDINATE SYSTEM SHIFT.",
-            "Subprogram type in post is external sub programs (M98).",
-            "Tool offset override is matched in the post."
+            "Program format is EM####.MIN.",
+            "Max spindle speed is 12000 RPM.",
+            "X zero depends on setup: right end for V-blocks, left side for the rotary chuck.",
+            "Y zero is shaft centerline.",
+            "Z zero is the top of the diameter.",
         ],
         "code_rules": [
-            "ROTORY AXIS IS \"A\"",
-            "THE M53 OR M54 MIGHT HAVE TO BE AT THE END OF THE CYCLE",
-            "CHECK THAT TAP HAS THE SPINDLE TURNED ON ! 6/30/2025"
-        ],
-        "shop_notes": [
-            "ROTORY CHUCK:",
-            "MAX DIA TO FIT THROUGH THE ROTORY CHUCK IS ABOUT 2.750. MAX LENGTH THAT CAN GO THROUGH THE CHUCK IS 17\".",
-            "29\" IS THE MAX LENGTH FROM THE FACE OF THE CHUCK.",
-            "26\" IS THE MAX LENGTH FROM THE FACE OF THE JAWS",
-            "V BLOCKS:",
-            "28\" IS THE MAX LENGTH OF PART IF THERE ARE KEYWAYS ON BOTH ENDS OF A PART.",
-            "THE PART CAN OVER HANG THE TABLE 10\" ON THE LEFT SIDE (NOT CUTTING KEYWAYS ON THAT END)",
-            "THE PART CAN OVER HANG 8.5\" ON THE RIGHT SIDE (WITH OUT HITTING THE CHUCK)"
+            "Rotary axis is A.",
+            "Use G11 for coordinate rotation and cancel it with G10 on its own line.",
+            "M53 or M54 may be needed at the end of the cycle.",
+            "When tapping, verify the spindle is actually turned on.",
         ],
         "workholding": [
-            "PART SIZE FOR DOUBLE V-BLOCK:",
-            "The max diameter that can rest in the double V-block is 2.5\".",
-            "When resting on a 2.5\" diameter the max the largest diameter can be is 5.3\". Any larger and the part will hit the table.",
-            "With the rest diameter size of 1/2\" the largest diameter that will fit with out hitting the table is reduced to 2.5\"."
-        ],
-        "tooling": [
-            "Verify actual machine loadout before release."
-        ],
-        "posting_cimco": [
-            "Verify any rotated work code.",
-            "Verify G10 after G11 output if using coordinate system shift.",
-            "Verify tap cycles have spindle on."
-        ],
-        "offset_logic": [
-            "X/Y/Z zero logic depends on V-block vs rotary chuck, and must be checked before posting."
+            "Rotary chuck limits: about 2.750 max diameter through the chuck, 17 in max through length, 29 in max from chuck face.",
+            "V-block limit: 28 in max part length if keyways are on both ends.",
+            "Part can overhang 10 in on the left side if that end is not being cut.",
+            "Part can overhang 8.5 in on the right side without hitting the chuck.",
         ],
         "mastercam_rules": [
-            "OKUMA SUB PROGRAM EXAMPLES",
-            "N5",
-            "(NORMAL PREP CODE TO CALL TOOL AND TURN ON SPINDLE )",
-            "A0 (ANGLE TO MILL FIRST FLAT)",
-            "CALL O1001 (MUST BE O THEN 4 LETTERS OR NUMBERS )",
-            "A180. (ANGLE FOR NEXT FLAT )",
-            "CALL O1001 (CALL SUB PROGRAM)",
-            "(NORMAL CODE TO STOP TOOL)",
-            "(REST OF PROGRAM AS NEEDED)",
-            "M30 (MUST HAVE M30 HERE)",
-            "O1001 (SUB PROGRAM FOR FLAT OR HEX )",
-            "(CODE AS NEEDED)",
-            "RTS (RETURN TO SENDER)",
-            "654 OKUMA G11 WORK COORDINATE ROTATE EXAMPLE",
-            "CALL O1000 (RUN SUB PROGRAM 1000 IN FIRST LOCATION)",
-            "G00 G90 G11 X0. Y0. P45. ( G90 FOR ABSOLUTE JUST IN CASE, G11 ROTATE CODE, X&Y LOCATION TO ROTATE AROUND, IN THIS CASE THE CENTER OF THE PART, ANGLE TO ROTATE )",
-            "(RUN SUB PROGRAM AGAIN AS NEEDED)",
-            "G10 ( CANCEL G11, MUST BE ON A LINE WITH NO OTHER G CODES )"
+            "For repeated flats or hexes, index A and call the subprogram again.",
+            "If using G11 rotation, rotate around the part center and cancel with G10 before continuing.",
+        ],
+        "posting_cimco": [
+            "Verify the zero location matches V-block or rotary setup.",
+            "Verify G10 cancels G11 correctly.",
+            "Verify tap cycles have spindle on.",
         ],
         "special_notes": [
-            "This machine page should help prevent bad assumptions on part length and V-block size."
-        ]
+            "Rotary chuck and V-block length limits are the main setup trap on this machine.",
+        ],
     },
-
     "655 Haas VF6": {
         "machine_type": "Mill",
         "overview": [
-            "Haas VF6 used for shaft work, rotary fixture work, woodruffs, keyways, and rotated milling."
+            "Haas VF6 for shaft work, rotary fixture work, keyways, woodruffs, and rotated milling.",
         ],
         "program_behavior": [
-            "PROGRAMS FORMAT EM####.NC",
-            "X zero right end face of shaft, unless using rotary fixture",
-            "Y zero center line of shaft",
-            "Z zero is center of the shaft"
-        ],
-        "post_limits": [
-            "Post supports local subprograms (M97).",
-            "Subprogram numbering starts at 1001.",
-            "Tool offset override is matched in the post."
+            "Program format is EM####.NC.",
+            "X zero is the right end face unless using the rotary fixture.",
+            "Y zero is shaft centerline.",
+            "Z zero is shaft centerline.",
         ],
         "code_rules": [
-            "Rotary fixture on right side of table so cords do not hit tools/tool changer, programs seem to be programed from the left end in the x+ direction.",
-            "The Rotary fixture has a through hole that the shaft can fit through as long as it is less then 3.5 or 4\" in diameter.",
-            "Max length from face of jaw to tailstock is 30\".",
-            "Must remove G90 G53 X-30. Y0. from end of the program (the rotary fixture hits the door).",
-            "Note off set #1 is on the left and counts up as you go right."
-        ],
-        "shop_notes": [
-            "GENERAL NOTES:",
-            "add a 2 sec dwell on woodruff . (G04 P2.0)",
-            "DRILL G83 CAN NOT HAVE A DRILL Q OF 0",
-            "FOR DRILLS, G98 canned cycle initial point return, g99 canned cycle R plane return, ( don’t crash)",
-            "When Turing part to add",
-            "G91 G28 Z0",
-            "G90 G53 X-30. Y0.",
-            "M00 (TURN PART  DEG)"
+            "Remove G90 G53 X-30. Y0. at the end when using the rotary fixture. It can hit the door.",
+            "G83 Q cannot be 0.",
+            "Use G98 or G99 intentionally on drill cycles. Do not assume the wrong return mode.",
+            "Add a 2-second dwell on woodruff cuts with G04 P2.0.",
         ],
         "workholding": [
-            "To use double v block the diameter that rest in the v must be smaller than about 2.4\". the largest diameter that is not in the v block must be smaller than 5.250",
-            "Double v block v's are approximately 6\" apart",
-            "For the single v block the diameter that rest in the v must be smaller than 8.250."
-        ],
-        "tooling": [
-            "Verify actual machine loadout before release."
-        ],
-        "posting_cimco": [
-            "Verify end-of-program home move does not hit the door with the rotary fixture.",
-            "Verify G83 Q values.",
-            "Verify woodruff dwell."
+            "Rotary fixture mounts on the right side of the table.",
+            "Rotary fixture max length from jaw face to tailstock is 30 in.",
+            "Rotary fixture through-hole fits shafts under about 3.5 - 4.0 in diameter.",
         ],
         "offset_logic": [
-            "Offset #1 is on the left and counts up as you go right."
+            "Offset 1 is on the left and counts up as you go right.",
         ],
-        "mastercam_rules": [
-            "655 HAAS SUB PROGRAM EXAMPLE PROGRAM EM10544.OP2)",
-            "NORMAL START OF PAROGRAM",
-            "M97 P1(P IS THE N NUMBER TO JUMP TO )",
-            "REST OF G CODE",
-            "M30 (END OF PROGRAM SO THAT SUBPROGRAM CODE CAN NOT BE RAN OUT OF ORDER)",
-            "(SUB PROGRAM /////////////////////////////////)",
-            "N1 (CODE AS NEEDED )",
-            "M99 (THE M99 RETURNS TO M97 LINE)",
-            "% (THIS % NEEDS TO BE HERE SO THE MILL READS THE PROGRAM )",
-            "655 Haas G68 WORK COORDINATE ROTATE EXAMPLE (PROGRAM EM5928.NC  JOB D19514DET-2 )",
-            "M97 P1001 (RUN SUB PROGRAM 1001 IN FIRST LOCATION)",
-            "G00 G90 G98 X0. Y0. R45. (G90 FOR ABSOLUTE JUST IN CASE, G98 ROTATE CODE, X&Y LOCATION TO ROTATE AROUND, IN THIS CASE THE CENTER OF THE PART, ANGLE TO ROTATE )",
-            "G69 G90 X0 Y0 (CANCEL G68, IM NOT SURE WHY YOU HAVE TO PUT THE LOCATION IN FOR THIS CODE BUT THAT IS HOW IT IS SHOWN IN THE HAAS BOOK )"
+        "milling_notes": HAAS_FLIP_SEQUENCE_30,
+        "posting_cimco": [
+            "Verify the end-home move clears the door when the rotary fixture is installed.",
+            "Verify every G83 cycle has a real Q value.",
+            "Verify G98 or G99 is correct before release.",
         ],
-        "special_notes": [
-            "Keep an eye on rotary-fixture clearance and end-home moves."
-        ]
     },
-
     "656 Haas VF3": {
         "machine_type": "Mill",
         "overview": [
-            "Haas VF-3/20 mill using similar tool numbering logic to 655 but only 20 pockets."
+            "Haas VF-3/20 using the 655 numbering logic with only 20 tool pockets.",
         ],
         "program_behavior": [
-            "Use the same tool numbers 655 mill, it has 100+ tool numbers but only 20 tool pockets",
-            "PROGRAMS FORMAT O######.NC , it looks like the program number must start with O then can be letters or numbers up to 5 more digits long.",
-            "Must have Oxxxx program number at the top of the program",
-            "only one mxx code on a line, robert w. 12/15/2025 M8 AND m3"
-        ],
-        "post_limits": [
-            "Post supports local subprograms (M97).",
-            "Subprogram numbering starts at 1001.",
-            "Tool offset override is matched in the post."
+            "Program format is O#####.NC.",
+            "Program must start with O#####.",
+            "Only one M code per line.",
+            "Use the 655 tool numbers, but manage the 20-pocket limit.",
         ],
         "code_rules": [
-            "X zero right end face of shaft",
-            "Y zero center line of shaft",
-            "Z zero is center of the shaft",
-            "Start off sets offset at G110 and counts up as you go from right front to left back.",
-            "The coolant pump is slow to turn on, move m8 up in program, consider deleting all m9, they are not needed the M01 and M30 both turn off the coolant.",
-            "Change the home position at the end of program to x-.020",
-            "when Turing part to add",
-            "G91 G28 Z0",
-            "G90 G53 X-20. Y0.",
-            "M00 (TURN PART  DEG)"
+            "Start offsets at G110.",
+            "Count offsets from right front to left back.",
+            "Move M8 earlier in the program because the coolant pump is slow to start.",
+            "Remove M9 if it is only being used at M01 or M30. Those already shut coolant off.",
+            "Change the end home position to X-.020.",
         ],
         "shop_notes": [
-            "The first note in the program is displayed in the program directory.",
-            "Rotary fixture on right side of table So cords do not hit tools/tool changer, programs seem to be programed from the left end in the x+ direction.",
-            "Max length from face of chuck to tailstock is 22\".",
-            "Note G110 is on the left and counts up as you go right"
+            "The first note in the program is shown in the control directory.",
         ],
         "workholding": [
-            "Verify rotary-fixture clearance and tailstock length."
-        ],
-        "tooling": [
-            "Use 655 numbering logic but manage the 20-pocket limit."
-        ],
-        "posting_cimco": [
-            "Verify single M-code-per-line output around spindle/coolant.",
-            "Verify end-home move X-.020 / G53 X-20 logic.",
-            "Verify slow coolant pump workaround."
+            "Rotary fixture mounts on the right side of the table.",
+            "Max length from chuck face to tailstock is 22 in.",
         ],
         "offset_logic": [
-            "G110 starts on the left and counts as you go right / through the setup."
+            "G110 is on the left and counts as you go right.",
         ],
-        "mastercam_rules": [
-            "Verify offset numbering matches machine pocket / setup plan."
+        "milling_notes": [
+            "Flip sequence:",
+            "G91 G28 Z0",
+            "G90 G53 X-20. Y0.",
+            "M00 (turn part and continue)",
+        ],
+        "posting_cimco": [
+            "Verify O##### format.",
+            "Verify one M code per line.",
+            "Verify early M8 output and X-.020 home move.",
         ],
         "special_notes": [
-            "This mill can trip you up faster than 655 because of pocket count and M-code formatting."
-        ]
+            "656 is easy to trip up with pocket-count limits and M-code formatting.",
+        ],
     },
-
     "657 Haas VF5": {
         "machine_type": "Mill",
         "overview": [
-            "Haas VF5 with A axis. Note says machine has a 10000 RPM spindle."
+            "Haas VF5 with A axis.",
         ],
         "program_behavior": [
-            "10000rpm spindle",
-            "PROGRAMS FORMAT O######.NC , it looks like the program number must start with O"
-        ],
-        "post_limits": [
-            "No post file uploaded for 657 in this batch, so this page is based on the machine note image only."
+            "10000 RPM spindle.",
+            "Program format is O#####.NC.",
+            "Program must start with O#####.",
         ],
         "code_rules": [
-            "Change the home position at the end of program to x-.020",
-            "when Turing part to add",
-            "G91 G28 Z0",
-            "G90 G53 X-30. Y0.",
-            "M00 (TURN PART  DEG)"
+            "Change the end home position to X-.020.",
         ],
-        "shop_notes": [
-            "It has an a axis, I believe this is the direction the A turns the part when positive."
-        ],
-        "workholding": [
-            "Verify actual rotary / A-axis orientation before release."
-        ],
-        "tooling": [
-            "Verify actual loadout."
-        ],
+        "milling_notes": HAAS_FLIP_SEQUENCE_30,
         "posting_cimco": [
-            "Verify A-axis sign and home move."
-        ],
-        "offset_logic": [
-            "Verify actual setup offsets."
-        ],
-        "mastercam_rules": [
-            "Use the note image as a reminder on A-axis positive direction until a real post/rule page is built."
+            "Verify the A-axis setup and the X-.020 home position before release.",
         ],
         "special_notes": [
-            "This page is intentionally lighter because only the note image was supplied."
-        ]
+            "Current repo note set for 657 is still light. Verify setup details at the machine.",
+        ],
     },
-
     "Cincinnati Arrow Mill": {
         "machine_type": "Mill",
         "overview": [
             "Cincinnati Millicron 3X VMC / Cincinnati Arrow style machine entry.",
-            "Only post file was supplied in this batch, not a dedicated note page."
+            "Only post file was supplied in this batch, not a dedicated note page.",
         ],
         "program_behavior": [
-            "Post supports subprograms."
+            "Post supports subprograms.",
         ],
         "post_limits": [
             "Subprogram type in post is external subprograms (M98).",
             "Tool offset override is not matched in the post.",
-            "Subprogram numbering starts at 1000."
+            "Subprogram numbering starts at 1000.",
         ],
         "code_rules": [
-            "Verify actual shop rules before first use because this page is post-driven right now."
+            "Verify actual shop rules before first use because this page is post-driven right now.",
         ],
         "shop_notes": [
-            "Add machine-specific shop notes as they are captured."
+            "Add machine-specific shop notes as they are captured.",
         ],
         "workholding": [
-            "Verify actual setup."
+            "Verify actual setup.",
         ],
         "tooling": [
-            "Verify actual machine loadout."
+            "Verify actual machine loadout.",
         ],
         "posting_cimco": [
-            "Backplot and inspect output carefully until notes are added."
+            "Backplot and inspect output carefully until notes are added.",
         ],
         "offset_logic": [
-            "Verify actual offset behavior."
+            "Verify actual offset behavior.",
         ],
         "mastercam_rules": [
-            "Verify origin and post selection before release."
+            "Verify origin and post selection before release.",
         ],
         "special_notes": [
-            "This page still needs real shop notes."
-        ]
+            "This page still needs real shop notes.",
+        ],
     },
-
     "411 Manual Lathe": {
         "machine_type": "Manual Lathe",
         "overview": [
-            "Manual machine reference page."
+            "Manual machine reference page.",
         ],
         "program_behavior": ["Not applicable."],
         "post_limits": ["Not applicable."],
@@ -1084,13 +915,12 @@ MACHINES = {
         "posting_cimco": ["Not applicable."],
         "offset_logic": ["Not applicable."],
         "mastercam_rules": ["Not applicable."],
-        "special_notes": ["Add manual-machine-specific notes later."]
+        "special_notes": ["Add manual-machine-specific notes later."],
     },
-
     "413 Manual Lathe": {
         "machine_type": "Manual Lathe",
         "overview": [
-            "Manual machine reference page."
+            "Manual machine reference page.",
         ],
         "program_behavior": ["Not applicable."],
         "post_limits": ["Not applicable."],
@@ -1101,6 +931,6 @@ MACHINES = {
         "posting_cimco": ["Not applicable."],
         "offset_logic": ["Not applicable."],
         "mastercam_rules": ["Not applicable."],
-        "special_notes": ["Add manual-machine-specific notes later."]
-    }
+        "special_notes": ["Add manual-machine-specific notes later."],
+    },
 }

@@ -79,6 +79,16 @@ LATHE_SPECS = {
         ]
     },
 
+    "437 Mazak QTS-450 MY": {
+        "control": "Mazatrol",
+        "rpm_max": 1000,
+        "notes": [
+            "Machine will not read G91 on incremental moves",
+            "Uses live tooling and keyway work",
+            "Verify current steady-rest location values"
+        ]
+    },
+
     "433 Mazak QTS-350": {
         "control": "Mazatrol",
         "rpm_max": 3000,
@@ -96,6 +106,16 @@ LATHE_SPECS = {
             "Uses teachable steady-rest positions",
             "Rest width 1.75",
             "Minimum to shoulder 1.50"
+        ]
+    },
+
+    "435 Okuma LB3000": {
+        "control": "OSP",
+        "rpm_max": None,
+        "notes": [
+            "Do not start the program with G13",
+            "Start with G270, CLEAR, and DRAW",
+            "G74 drill cycle must include D peck value"
         ]
     },
 
