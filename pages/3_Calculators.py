@@ -1,6 +1,14 @@
 import math
 import streamlit as st
 from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label, get_center_drill_options
+from data.woodruff_keys import (
+    WOODRUFF_KEY_NUMBERS,
+    WOODRUFF_KEY_SOURCE,
+    WOODRUFF_NOMINAL_SIZES,
+    WOODRUFF_TOLERANCES,
+    get_woodruff_key_by_number,
+    get_woodruff_keys_by_nominal_size,
+)
 from utils.ui_helpers import render_sidebar_nav
 
 st.set_page_config(
@@ -24,6 +32,29 @@ def safe_tangent(angle_degrees: float) -> float | None:
         return None
 
     return tangent_value
+
+
+def format_woodruff_range(minimum: float, maximum: float) -> str:
+    return f"{minimum:.4f} - {maximum:.4f}"
+
+
+def format_woodruff_target(value: float, tolerance: str) -> str:
+    return f"{value:.4f} ({tolerance})"
+
+
+def build_woodruff_display_rows(rows: list[dict]) -> list[dict]:
+    return [
+        {
+            "Key Number": row["key_number"],
+            "Nominal Size": row["nominal_size"],
+            "Cutter Diameter": format_woodruff_range(row["cutter_diameter_min"], row["cutter_diameter_max"]),
+            "Keyseat Width": format_woodruff_range(row["keyseat_width_min"], row["keyseat_width_max"]),
+            "Shaft Depth": format_woodruff_target(row["shaft_depth"], WOODRUFF_TOLERANCES["shaft_depth"]),
+            "Key Above Shaft": format_woodruff_target(row["key_above_shaft"], WOODRUFF_TOLERANCES["key_above_shaft"]),
+            "Hub Depth": format_woodruff_target(row["hub_depth"], WOODRUFF_TOLERANCES["hub_depth"]),
+        }
+        for row in rows
+    ]
 
 
 st.markdown("""
@@ -55,8 +86,8 @@ st.title("Calculators")
 st.caption("Empower MFG - Built for Joshua")
 st.markdown("</div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-    ["Triangle", "Keyway", "Center Drill", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+    ["Triangle", "Keyway", "Woodruff Key", "Center Drill", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
 )
 
 with tab1:
@@ -362,6 +393,48 @@ Built around the print styles you actually use. Main output is the X value (dia)
     st.write("Width Chord + Depth Below Chord matches the workflow where you model the width as a chord, then step deeper from that line.")
 
 with tab3:
+    st.subheader("Woodruff Key Lookup")
+
+    st.markdown(
+        """
+<div style="font-size:0.92rem; line-height:1.35;">
+Look up ANSI Woodruff key sizes by key number or by nominal size. Good for checking cutter diameter and keyseat depth before you start programming.
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    lookup_mode = st.radio(
+        "Lookup By",
+        ["Key Number", "Nominal Size"],
+        horizontal=True,
+        key="woodruff_lookup_mode"
+    )
+
+    if lookup_mode == "Key Number":
+        selected_key_number = st.selectbox("Key Number", WOODRUFF_KEY_NUMBERS, key="woodruff_key_number")
+        lookup_rows = [get_woodruff_key_by_number(selected_key_number)]
+        lookup_rows = [row for row in lookup_rows if row is not None]
+    else:
+        selected_nominal_size = st.selectbox("Nominal Size", WOODRUFF_NOMINAL_SIZES, key="woodruff_nominal_size")
+        lookup_rows = get_woodruff_keys_by_nominal_size(selected_nominal_size)
+
+    display_rows = build_woodruff_display_rows(lookup_rows)
+
+    if len(lookup_rows) == 1:
+        row = lookup_rows[0]
+        c1, c2 = st.columns(2)
+        c1.metric("Key Number", row["key_number"])
+        c2.metric("Nominal Size", row["nominal_size"])
+
+    st.table(display_rows)
+    st.caption(
+        "Source: "
+        f"{WOODRUFF_KEY_SOURCE}. "
+        "Cutter diameter and keyseat width show ANSI min/max ranges. Shaft depth, key above shaft, and hub depth include ANSI tolerances."
+    )
+
+with tab4:
     st.subheader("Center Drill Calculator")
 
     st.markdown(
@@ -449,7 +522,7 @@ Use bell / body diameter like the shop talks about it. Calculator gives pilot ho
             if bell_dia_calc > body_dia:
                 st.warning("Calculated bell / body diameter exceeds tool body diameter.")
 
-with tab4:
+with tab5:
     st.subheader("Chamfer Calculator")
 
     st.markdown(
@@ -710,7 +783,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     "This tool will not make that chamfer cleanly."
                 )
 
-with tab5:
+with tab6:
     st.subheader("Drill Breakthrough Calculator")
 
     st.markdown(
@@ -741,7 +814,7 @@ Use this to figure the extra drill travel needed after the point first reaches t
 
     st.write("Total drill depth is referenced from the moment the drill point first contacts the back side of the part.")
 
-with tab6:
+with tab7:
     st.subheader("IN ↔ MM Converter")
 
     st.markdown(

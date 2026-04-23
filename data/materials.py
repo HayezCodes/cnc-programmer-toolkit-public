@@ -284,6 +284,15 @@ MILL_MATERIALS = {
     }
 }
 
+WOODRUFF_KEY_CUTTER_PLACEHOLDER = {
+    "sfm": None,
+    "ipt": None,
+    "notes": "Placeholder only. No approved Woodruff key cutter baseline is loaded yet. Add shop-approved values in data/materials.py when ready."
+}
+
+for material_data in MILL_MATERIALS.values():
+    material_data["Woodruff Key Cutter"] = WOODRUFF_KEY_CUTTER_PLACEHOLDER.copy()
+
 DRILL_DATA = {
     "10 Series Steel": {
         "HSS": {"sfm": 80, "ipr": 0.0045, "notes": "Standard HSS drill baseline."},

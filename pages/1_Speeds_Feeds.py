@@ -339,16 +339,22 @@ with main_tab1:
 with main_tab2:
     st.subheader("Mill Speeds & Feeds")
 
+    woodruff_tooth_count = None
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         material_mill = st.selectbox("Material", list(MILL_MATERIALS.keys()), key="mill_material")
     with col2:
-        tool_type = st.selectbox("Tool Type", ["Spot Drill", "Center Drill", "Drill", "Tap", "Endmill"], key="mill_tool_type")
+        tool_type = st.selectbox("Tool Type", ["Spot Drill", "Center Drill", "Drill", "Tap", "Endmill", "Woodruff Key Cutter"], key="mill_tool_type")
     with col3:
         if tool_type == "Endmill":
             em_operation = st.selectbox("Operation", ["rough", "finish"], key="mill_em_operation")
             drill_type_mill = None
             tool_style_mill = st.selectbox("Tool Style", ["Standard Endmill", '1/2 Ingersoll Rougher (Hi-Feed)'], key="mill_tool_style")
+        elif tool_type == "Woodruff Key Cutter":
+            woodruff_tooth_count = st.number_input("Cutter Teeth", min_value=1, value=8, step=1, key="mill_woodruff_teeth")
+            em_operation = None
+            drill_type_mill = None
+            tool_style_mill = None
         elif tool_type == "Drill":
             drill_type_mill = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "CoroDrill"], key="mill_drill_type")
             em_operation = None
@@ -379,6 +385,9 @@ with main_tab2:
             else:
                 diameter = diameter_input("Endmill Diameter", "mill_em_dia", unit_mode, 0.5000, 0.0100)
             tool_label = tool_style_mill
+        elif tool_type == "Woodruff Key Cutter":
+            diameter = diameter_input("Cutter Diameter", "mill_woodruff_dia", unit_mode, 0.5000, 0.0100)
+            tool_label = "Woodruff Key Cutter"
         else:
             diameter = diameter_input("Tap Diameter", "tap_diameter", unit_mode, 0.5000, 0.0100)
             tool_label = "Custom Tap Diameter"
@@ -495,3 +504,31 @@ with main_tab2:
 
             st.write(f"**Notes:** {rec['notes']}")
             render_operator_notes(material_mill)
+
+    elif tool_type == "Woodruff Key Cutter":
+        rec = MILL_MATERIALS[material_mill]["Woodruff Key Cutter"]
+        sfm = rec.get("sfm")
+        ipt = rec.get("ipt")
+
+        c1, c2, c3, c4 = st.columns(4)
+
+        if sfm is None or ipt is None:
+            c1.metric("SFM", "TBD")
+            c2.metric("RPM", "TBD")
+            c3.metric("Chipload (IPT)", "TBD")
+            c4.metric("Feed (IPM)", "TBD")
+            st.write(f"**Notes:** {rec['notes']}")
+            st.write("**Setup Note:** Enter the actual cutter diameter and tooth count, then add approved shop values in the data file when you are ready to turn this on.")
+        else:
+            rpm = rpm_from_sfm(sfm, diameter)
+            ipm = rpm * woodruff_tooth_count * ipt
+
+            c1.metric("SFM", f"{sfm:.0f}")
+            c2.metric("RPM", f"{rpm:.0f}")
+            c3.metric("Chipload (IPT)", f"{ipt:.4f}")
+            c4.metric("Feed (IPM)", f"{ipm:.2f}")
+
+            st.write(f"**Cutter Teeth:** {woodruff_tooth_count}")
+            st.write(f"**Notes:** {rec['notes']}")
+
+        render_operator_notes(material_mill)
