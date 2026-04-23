@@ -1,6 +1,7 @@
 import streamlit as st
 from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label
 from data.materials import LATHE_MATERIALS, MILL_MATERIALS, DRILL_DATA, OPERATOR_NOTES
+from data.woodruff_reference import build_woodruff_reference, WOODRUFF_SOURCE_TYPES
 from utils.formulas import rpm_from_sfm, ipm_from_ipr, drill_feed_ipm, tap_feed_ipm_from_tpi
 from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
 
@@ -157,6 +158,24 @@ def render_center_drill_tool_info(center_drill_size: str, preset_data: dict, uni
         d1.metric("Center Drill Size", center_drill_size)
         d2.metric("Style / Angle", f"{preset_data['style']} / {included_angle:.0f} deg")
         d3.metric("Pilot / Body", f"{to_display_units(pilot_diameter_in, unit_mode):.4f} / {to_display_units(body_diameter_in, unit_mode):.4f} {unit_label(unit_mode)}")
+
+
+def sync_woodruff_reference_state(reference_data: dict):
+    signature = "|".join(
+        [
+            reference_data["source_type"],
+            reference_data.get("material_family") or "unmapped",
+            f"{reference_data['matched_diameter']:.4f}",
+            f"{(reference_data.get('default_sfm') or 0.0):.4f}",
+            f"{reference_data['default_ipt']:.4f}",
+        ]
+    )
+
+    if st.session_state.get("mill_woodruff_reference_signature") != signature:
+        st.session_state["mill_woodruff_teeth"] = int(reference_data["tooth_count"])
+        st.session_state["mill_woodruff_sfm_override"] = float(reference_data.get("default_sfm") or 0.0)
+        st.session_state["mill_woodruff_ipt_override"] = float(reference_data["default_ipt"])
+        st.session_state["mill_woodruff_reference_signature"] = signature
 
 
 st.markdown("### Diameter Units")
@@ -351,7 +370,7 @@ with main_tab2:
             drill_type_mill = None
             tool_style_mill = st.selectbox("Tool Style", ["Standard Endmill", '1/2 Ingersoll Rougher (Hi-Feed)'], key="mill_tool_style")
         elif tool_type == "Woodruff Key Cutter":
-            woodruff_tooth_count = st.number_input("Cutter Teeth", min_value=1, value=8, step=1, key="mill_woodruff_teeth")
+            woodruff_source_type = st.selectbox("Source Type", WOODRUFF_SOURCE_TYPES, key="mill_woodruff_source_type")
             em_operation = None
             drill_type_mill = None
             tool_style_mill = None
@@ -506,29 +525,47 @@ with main_tab2:
             render_operator_notes(material_mill)
 
     elif tool_type == "Woodruff Key Cutter":
-        rec = MILL_MATERIALS[material_mill]["Woodruff Key Cutter"]
-        sfm = rec.get("sfm")
-        ipt = rec.get("ipt")
+        woodruff_reference = build_woodruff_reference(material_mill, diameter, woodruff_source_type)
+        sync_woodruff_reference_state(woodruff_reference)
+
+        override_col1, override_col2, override_col3 = st.columns(3)
+        with override_col1:
+            woodruff_tooth_count = st.number_input("Tooth Count", min_value=1, step=1, key="mill_woodruff_teeth")
+        with override_col2:
+            sfm = st.number_input("SFM Override", min_value=0.0, step=1.0, format="%.1f", key="mill_woodruff_sfm_override")
+        with override_col3:
+            ipt = st.number_input("IPT Override", min_value=0.0, step=0.0001, format="%.4f", key="mill_woodruff_ipt_override")
+
+        rpm = (3.82 * sfm) / diameter if diameter > 0 else 0
+        ipm = ipt * rpm * woodruff_tooth_count
 
         c1, c2, c3, c4 = st.columns(4)
+        c1.metric("SFM", f"{sfm:.1f}")
+        c2.metric("RPM", f"{rpm:.0f}")
+        c3.metric("Chipload (IPT)", f"{ipt:.4f}")
+        c4.metric("Feed (IPM)", f"{ipm:.2f}")
 
-        if sfm is None or ipt is None:
-            c1.metric("SFM", "TBD")
-            c2.metric("RPM", "TBD")
-            c3.metric("Chipload (IPT)", "TBD")
-            c4.metric("Feed (IPM)", "TBD")
-            st.write(f"**Notes:** {rec['notes']}")
-            st.write("**Setup Note:** Enter the actual cutter diameter and tooth count, then add approved shop values in the data file when you are ready to turn this on.")
+        st.write(f"**Reference Label:** {woodruff_reference['reference_label']}")
+        st.write(f"**Source Type:** {woodruff_reference['source_type']}")
+        st.write(f"**Material Family Used:** {woodruff_reference['material_family'] or 'manual_override_required'}")
+        st.write(f"**Cutter Diameter Used:** {format_length(diameter, unit_mode)}")
+        st.write(f"**Tooth Count Used:** {woodruff_tooth_count}")
+        if woodruff_reference["default_sfm"] is not None:
+            st.write(f"**Default SFM:** {woodruff_reference['default_sfm']:.1f}")
         else:
-            rpm = rpm_from_sfm(sfm, diameter)
-            ipm = rpm * woodruff_tooth_count * ipt
+            st.write("**Default SFM:** Manual entry required")
+        st.write(f"**Default IPT:** {woodruff_reference['default_ipt']:.4f}")
 
-            c1.metric("SFM", f"{sfm:.0f}")
-            c2.metric("RPM", f"{rpm:.0f}")
-            c3.metric("Chipload (IPT)", f"{ipt:.4f}")
-            c4.metric("Feed (IPM)", f"{ipm:.2f}")
+        if woodruff_reference["material_match_note"]:
+            st.write(f"**Reference Note:** {woodruff_reference['material_match_note']}")
 
-            st.write(f"**Cutter Teeth:** {woodruff_tooth_count}")
-            st.write(f"**Notes:** {rec['notes']}")
+        if woodruff_reference["diameter_band_label"] is not None:
+            st.write(f"**Diameter Band Used:** {woodruff_reference['diameter_band_label']}")
+            st.write(f"**HSS IPT Range Used:** {woodruff_reference['ipt_min']:.4f} to {woodruff_reference['ipt_max']:.4f}")
+
+        if not woodruff_reference["exact_diameter_match"]:
+            st.caption(
+                f"Tooth count lookup used nearest supported cutter diameter {format_length(woodruff_reference['matched_diameter'], unit_mode)}."
+            )
 
         render_operator_notes(material_mill)
