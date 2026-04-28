@@ -128,7 +128,7 @@ with main_col3:
 # ---------------------------
 st.markdown('<div class="section-label">Tools</div>', unsafe_allow_html=True)
 
-tool_col1, tool_col2 = st.columns(2)
+tool_col1, tool_col2, tool_col3 = st.columns(3)
 
 with tool_col1:
     st.markdown("""
@@ -151,3 +151,14 @@ with tool_col2:
     """, unsafe_allow_html=True)
     if st.button("Calculators", use_container_width=True):
         st.switch_page("pages/3_Calculators.py")
+
+with tool_col3:
+    st.markdown("""
+    <div class="tool-card">
+        <div class="tool-icon">🧾</div>
+        <div class="tool-title">G &amp; M Codes</div>
+        <div class="tool-text">Searchable reference for common G codes, M codes, tool comp, coolant, spindle, offsets, and shop warnings.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("G & M Codes", use_container_width=True):
+        st.switch_page("pages/6_G_M_Codes.py")
