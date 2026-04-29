@@ -91,6 +91,44 @@ def render_operator_notes(material_name: str, title="Operator Notes"):
         st.write(line)
 
 
+def safe_doc(value):
+    return value if value not in (None, "", "TBD") else "Needs DOC"
+
+
+def format_doc_inches(value):
+    return f"{value:.4f} in"
+
+
+def factor_doc_value(factor, diameter: float):
+    if factor in (None, "", "TBD"):
+        return "Needs DOC"
+    try:
+        return format_doc_inches(float(factor) * diameter)
+    except (TypeError, ValueError):
+        return "Needs DOC"
+
+
+def endmill_doc_guidance(rec: dict, operation: str, diameter: float):
+    if operation == "rough":
+        return {
+            "Slot DOC": factor_doc_value(rec.get("rough_slot_doc_factor"), diameter),
+            "Side/Profiling DOC": factor_doc_value(rec.get("rough_side_doc_factor"), diameter),
+        }
+
+    return {
+        "Slot DOC": factor_doc_value(rec.get("finish_slot_doc_factor"), diameter),
+        "Side/Profiling DOC": factor_doc_value(rec.get("finish_side_doc_factor"), diameter),
+        "Finish radial stock": safe_doc(rec.get("finish_radial", "Needs DOC")),
+    }
+
+
+def render_endmill_doc_guidance(rec: dict, operation: str, diameter: float):
+    st.markdown("**DOC Guidance**")
+    guidance = endmill_doc_guidance(rec, operation, diameter)
+    for label, value in guidance.items():
+        st.write(f"{label}: {value}")
+
+
 def get_hif_feed_data(material_name: str):
     if material_name == "10 Series Steel":
         return {"sfm_range": "350 - 700", "ipt_range": ".004 - .015", "axial_doc": ".008 - .016", "chip_thickness": ".002 - .006", "coolant": "No", "grade_note": "Steel family hi-feed starting range"}
@@ -200,15 +238,18 @@ with main_tab1:
         rec = LATHE_MATERIALS[material][operation]
         sfm = apply_cut_mode(rec["sfm"], "sfm")
         ipr = apply_cut_mode(rec["ipr"], "ipr")
+        doc = safe_doc(rec.get("doc", "Needs DOC"))
         rpm = rpm_from_sfm(sfm, diameter)
         ipm = ipm_from_ipr(ipr, rpm)
 
         st.markdown("### Recommendation")
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("SFM", f"{sfm:.0f}")
         c2.metric("RPM", f"{rpm:.0f}")
         c3.metric("Feed (IPR)", f"{ipr:.4f}")
         c4.metric("Feed (IPM)", f"{ipm:.2f}")
+        c5.metric("DOC", doc)
+        st.caption("Lathe DOC is shown as radial / per-side unless the material note says total remaining.")
 
         st.markdown("### Setup Guidance")
         st.markdown(
@@ -283,9 +324,10 @@ with main_tab1:
             hif = get_hif_feed_data(material_live)
 
             st.markdown("### Live Tooling Recommendation - HI-FEED INSERT MILL")
-            c1, c2 = st.columns(2)
+            c1, c2, c3 = st.columns(3)
             c1.metric("SFM Range", hif["sfm_range"])
             c2.metric("IPT Range", hif["ipt_range"])
+            c3.metric("Axial DOC", safe_doc(hif.get("axial_doc", "Needs DOC")))
 
             d1, d2, d3 = st.columns(3)
             d1.metric("Chip Thickness", hif["chip_thickness"])
@@ -315,6 +357,7 @@ with main_tab1:
             c2.metric("RPM", f"{rpm_live:.0f}")
             c3.metric("Chipload (IPT)", f"{ipt_live:.4f}")
             c4.metric("Feed (IPM)", f"{ipm_live:.2f}")
+            render_endmill_doc_guidance(rec_live, em_operation_live, tool_diameter_live)
 
             st.write(f"**Notes:** {rec_live['notes']}")
             render_operator_notes(material_live)
@@ -487,9 +530,10 @@ with main_tab2:
             hif = get_hif_feed_data(material_mill)
 
             st.markdown("### Endmill Recommendation - HI-FEED INSERT MILL")
-            c1, c2 = st.columns(2)
+            c1, c2, c3 = st.columns(3)
             c1.metric("SFM Range", hif["sfm_range"])
             c2.metric("IPT Range", hif["ipt_range"])
+            c3.metric("Axial DOC", safe_doc(hif.get("axial_doc", "Needs DOC")))
 
             d1, d2, d3 = st.columns(3)
             d1.metric("Chip Thickness", hif["chip_thickness"])
@@ -520,6 +564,7 @@ with main_tab2:
             c2.metric("RPM", f"{rpm:.0f}")
             c3.metric("Chipload (IPT)", f"{ipt:.4f}")
             c4.metric("Feed (IPM)", f"{ipm:.2f}")
+            render_endmill_doc_guidance(rec, em_operation, diameter)
 
             st.write(f"**Notes:** {rec['notes']}")
             render_operator_notes(material_mill)
