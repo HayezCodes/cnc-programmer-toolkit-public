@@ -485,152 +485,6 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
     )
 
     with st.container(border=True):
-        st.markdown("### Basic Mode")
-
-        basic_mode = st.radio(
-            "Solve For",
-            ["Chamfer Size -> Edge Depth", "Edge Depth -> Chamfer Size"],
-            horizontal=True,
-            key="chamfer_basic_mode"
-        )
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if basic_mode == "Chamfer Size -> Edge Depth":
-                basic_chamfer_size = st.number_input(
-                    "Chamfer Size",
-                    min_value=0.0001,
-                    value=0.0300,
-                    step=0.0010,
-                    format="%.4f",
-                    key="chamfer_basic_size"
-                )
-            else:
-                basic_edge_depth = st.number_input(
-                    "Edge Depth",
-                    min_value=0.0001,
-                    value=0.0300,
-                    step=0.0010,
-                    format="%.4f",
-                    key="chamfer_basic_depth"
-                )
-        with col2:
-            basic_chamfer_angle = st.number_input(
-                "Chamfer Angle (deg)",
-                min_value=0.1,
-                max_value=89.9,
-                value=45.0,
-                step=1.0,
-                format="%.1f",
-                key="chamfer_basic_angle"
-            )
-
-        st.caption("45 deg chamfer: edge depth = chamfer size.")
-
-        basic_tangent = safe_tangent(basic_chamfer_angle)
-
-        if basic_tangent is None:
-            st.warning("Chamfer angle must be greater than 0 and less than 90 degrees.")
-        else:
-            if basic_mode == "Chamfer Size -> Edge Depth":
-                basic_edge_depth = basic_chamfer_size / basic_tangent
-            else:
-                basic_chamfer_size = basic_edge_depth * basic_tangent
-
-            r1, r2 = st.columns(2)
-            r1.metric("Chamfer Size", f"{basic_chamfer_size:.4f}")
-            r2.metric("Edge Depth", f"{basic_edge_depth:.4f}")
-
-        st.write("Use Basic Mode for quick keyway edge breaks and general chamfers from a sharp edge.")
-
-    with st.container(border=True):
-        with st.expander("Advanced Programming / Tool Depth", expanded=True):
-            st.markdown(
-                """
-<div style="font-size:0.88rem; line-height:1.35;">
-Use this when you need the programmed depth for a chamfer mill or similar tool. Final tool depth includes the extra offset caused by a non-sharp tool tip.
-</div>
-""",
-                unsafe_allow_html=True,
-            )
-
-            col1, col2 = st.columns(2)
-            with col1:
-                advanced_chamfer_size = st.number_input(
-                    "Chamfer Size",
-                    min_value=0.0001,
-                    value=0.0300,
-                    step=0.0010,
-                    format="%.4f",
-                    key="chamfer_advanced_size"
-                )
-                advanced_chamfer_angle = st.number_input(
-                    "Chamfer Angle (deg)",
-                    min_value=0.1,
-                    max_value=89.9,
-                    value=45.0,
-                    step=1.0,
-                    format="%.1f",
-                    key="chamfer_advanced_angle"
-                )
-            with col2:
-                tool_included_angle = st.number_input(
-                    "Tool Included Angle (deg)",
-                    min_value=1.0,
-                    max_value=179.9,
-                    value=90.0,
-                    step=1.0,
-                    format="%.1f",
-                    key="chamfer_tool_included_angle"
-                )
-                tool_tip_diameter = st.number_input(
-                    "Tool Tip Diameter",
-                    min_value=0.0000,
-                    value=0.0100,
-                    step=0.0010,
-                    format="%.4f",
-                    key="chamfer_tool_tip_dia"
-                )
-
-            advanced_tangent = safe_tangent(advanced_chamfer_angle)
-            tool_half_angle = tool_included_angle / 2
-            tool_half_tangent = safe_tangent(tool_half_angle)
-
-            if advanced_tangent is None:
-                st.warning("Chamfer angle must be greater than 0 and less than 90 degrees.")
-            elif tool_half_tangent is None:
-                st.warning("Tool included angle must be greater than 0 and less than 180 degrees.")
-            else:
-                edge_depth = advanced_chamfer_size / advanced_tangent
-                tool_contact_diameter = tool_tip_diameter + (2 * edge_depth * tool_half_tangent)
-                tip_offset = (tool_tip_diameter / 2) / tool_half_tangent
-                final_tool_depth = edge_depth + tip_offset
-                tool_angle_matches = abs(tool_half_angle - advanced_chamfer_angle) <= 0.1
-
-                r1, r2 = st.columns(2)
-                r1.metric("Edge Depth", f"{edge_depth:.4f}")
-                r2.metric("Tool Contact Diameter", f"{tool_contact_diameter:.4f}")
-
-                r3, r4 = st.columns(2)
-                r3.metric("Tip Offset from Sharp Point", f"{tip_offset:.4f}")
-                r4.metric("Final Tool Depth", f"{final_tool_depth:.4f}")
-
-                st.write(
-                    f"For a {advanced_chamfer_size:.4f} chamfer at {advanced_chamfer_angle:.1f} deg, "
-                    f"program final tool depth = {final_tool_depth:.4f}"
-                )
-
-                if tool_angle_matches:
-                    st.info("Final Tool Depth is referenced from the sharp edge and already includes the tool tip diameter offset.")
-                else:
-                    st.warning(
-                        f"Tool side angle is {tool_half_angle:.1f} deg, but the requested chamfer angle is {advanced_chamfer_angle:.1f} deg. "
-                        "This tool will not make that chamfer cleanly."
-                    )
-
-                st.write("Use Tool Contact Diameter to help with your toolpath setup, especially when dialing in a chamfer on keyway edges.")
-
-    with st.container(border=True):
         st.markdown("### Drilled Hole Chamfer / Final Z")
         st.write(
             "This is for chamfering an existing drilled/pilot hole. It adds the extra axial depth required "
@@ -657,19 +511,15 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
         spot_drill_tool_dia = 0.0
 
         if tool_mode == "Custom Chamfer / Spot Drill":
-            angle_col1, angle_col2 = st.columns(2)
-            with angle_col1:
-                included_angle_deg = st.number_input(
-                    "Chamfer Included Angle (deg)",
-                    min_value=0.1,
-                    max_value=179.9,
-                    value=90.0,
-                    step=1.0,
-                    format="%.1f",
-                    key="hole_chamfer_custom_included_angle"
-                )
-            with angle_col2:
-                st.metric("Angle Source", "Custom")
+            included_angle_deg = st.number_input(
+                "Chamfer Included Angle (deg)",
+                min_value=0.1,
+                max_value=179.9,
+                value=90.0,
+                step=1.0,
+                format="%.1f",
+                key="hole_chamfer_custom_included_angle"
+            )
         elif tool_mode == "Center Drill Preset":
             center_drill_preset = st.selectbox(
                 "Center Drill Size",
@@ -688,14 +538,11 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 st.session_state["hole_chamfer_center_drill_mastercam_check_z"] = -0.6550 if center_drill_preset == "8" else 0.0000
                 st.session_state["hole_chamfer_center_drill_preset_state"] = center_drill_preset
 
-            preset_col1, preset_col2, preset_col3 = st.columns(3)
+            preset_col1, preset_col2, preset_col3, preset_col4 = st.columns(4)
             preset_col1.metric("Style", center_drill_data["style"])
             preset_col2.metric("Included Angle", f"{included_angle_deg:.1f} deg")
             preset_col3.metric("Pilot Diameter", f"{center_drill_pilot_dia:.4f}")
-
-            preset_col4, preset_col5 = st.columns(2)
             preset_col4.metric("Body / Bell Diameter", f"{center_drill_body_dia:.4f}")
-            preset_col5.metric("Pilot Length (C)", f"{center_drill_pilot_length:.4f}")
 
             tool_col1, tool_col2 = st.columns(2)
             with tool_col1:
@@ -716,6 +563,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     key="hole_chamfer_center_drill_mastercam_check_z"
                 )
 
+            st.caption(f"Preset chart C default: {center_drill_pilot_length:.4f}")
             st.caption("Existing hole diameter is the hole already in the part. Center drill pilot diameter is tool geometry.")
             st.caption(
                 "Final Program Z uses Tool Pilot Length / Full Depth Offset (C). Adjust C if your Mastercam tool model "
@@ -767,19 +615,17 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 "against the finished chamfer diameter."
             )
 
+        base_depth_mode_options = ["Manual"] if tool_mode == "Custom Chamfer / Spot Drill" else ["Auto from Selected Tool", "Manual"]
         default_base_depth_mode = "Manual" if tool_mode == "Custom Chamfer / Spot Drill" else "Auto from Selected Tool"
         if st.session_state.get("hole_chamfer_base_depth_mode_tool_mode") != tool_mode:
             st.session_state["hole_chamfer_base_depth_mode"] = default_base_depth_mode
             st.session_state["hole_chamfer_base_depth_mode_tool_mode"] = tool_mode
 
-        base_depth_mode = st.selectbox(
-            "Base Depth Mode",
-            ["Auto from Selected Tool", "Manual"],
-            key="hole_chamfer_base_depth_mode"
-        )
+        if st.session_state.get("hole_chamfer_base_depth_mode") not in base_depth_mode_options:
+            st.session_state["hole_chamfer_base_depth_mode"] = default_base_depth_mode
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
+        input_col1, input_col2, input_col3, input_col4 = st.columns(4)
+        with input_col1:
             existing_hole_dia = st.number_input(
                 "Existing Drilled / Pilot Hole Diameter",
                 min_value=0.0001,
@@ -788,19 +634,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 format="%.4f",
                 key="hole_chamfer_existing_dia"
             )
-            if base_depth_mode == "Manual":
-                base_hole_depth = st.number_input(
-                    "Base Pilot / Hole Depth from Face",
-                    min_value=0.0000,
-                    value=0.5831,
-                    step=0.0010,
-                    format="%.4f",
-                    key="hole_chamfer_base_depth"
-                )
-            else:
-                base_hole_depth = None
-                st.metric("Base Depth Source", "Auto from Selected Tool")
-        with col2:
+        with input_col2:
             finished_chamfer_dia = st.number_input(
                 "Finished Chamfer Major Diameter",
                 min_value=0.0001,
@@ -809,27 +643,47 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 format="%.4f",
                 key="hole_chamfer_finished_dia"
             )
-            st.metric("Active Included Angle", f"{included_angle_deg:.1f} deg")
-        with col3:
-            cleanup_allowance_dia = st.number_input(
-                "Cleanup Allowance on Diameter",
+        with input_col3:
+            backoff_clearance_dia = st.number_input(
+                "Backoff / Clearance on Diameter",
+                min_value=0.0000,
                 value=0.0000,
                 step=0.0005,
                 format="%.4f",
-                key="hole_chamfer_cleanup_allowance"
+                key="hole_chamfer_backoff_clearance"
             )
+        with input_col4:
+            if len(base_depth_mode_options) > 1:
+                base_depth_mode = st.selectbox(
+                    "Base Depth Mode",
+                    base_depth_mode_options,
+                    key="hole_chamfer_base_depth_mode"
+                )
+            else:
+                base_depth_mode = "Manual"
+                st.caption("Base Depth Mode: Manual")
 
-        finished_dia_with_allowance = finished_chamfer_dia + cleanup_allowance_dia
-        target_chamfer_dia = finished_dia_with_allowance
+        if base_depth_mode == "Manual":
+            base_hole_depth = st.number_input(
+                "Base Pilot / Hole Depth from Face",
+                min_value=0.0000,
+                value=0.5831,
+                step=0.0010,
+                format="%.4f",
+                key="hole_chamfer_base_depth"
+            )
+        else:
+            base_hole_depth = None
+
+        st.caption("Backoff / Clearance subtracts from the finished chamfer diameter to help avoid cutting the chamfer oversized.")
+
+        target_chamfer_dia = finished_chamfer_dia - backoff_clearance_dia
 
         invalid_hole_chamfer_inputs = False
         auto_base_warning = None
-        center_drill_diameter_at_final_z = None
+        diameter_at_final_z = None
         diameter_at_mastercam_z = None
-
-        if finished_chamfer_dia <= existing_hole_dia:
-            st.error("Finished chamfer diameter must be larger than existing hole diameter.")
-            invalid_hole_chamfer_inputs = True
+        cleanup_depth = None
 
         if included_angle_deg <= 0 or included_angle_deg >= 180:
             st.error("Included angle must be greater than 0 and less than 180 degrees.")
@@ -839,36 +693,34 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             st.error("Base pilot / hole depth must be zero or positive.")
             invalid_hole_chamfer_inputs = True
 
-        if finished_dia_with_allowance <= existing_hole_dia:
-            st.error("Finished diameter with allowance must be larger than the existing hole diameter.")
+        if backoff_clearance_dia < 0:
+            st.error("Backoff / Clearance on Diameter must be zero or positive.")
             invalid_hole_chamfer_inputs = True
 
+        minimum_target_dia = existing_hole_dia
         if tool_mode == "Center Drill Preset":
-            if tool_pilot_length_c is not None and tool_pilot_length_c < 0:
-                st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
-                invalid_hole_chamfer_inputs = True
+            minimum_target_dia = max(minimum_target_dia, center_drill_pilot_dia)
+        elif tool_mode == "Spot Drill Preset":
+            minimum_target_dia = max(minimum_target_dia, spot_drill_tip_dia)
 
-            if target_chamfer_dia <= center_drill_pilot_dia:
-                st.error("Target diameter must be larger than the center drill pilot diameter.")
-                invalid_hole_chamfer_inputs = True
+        if target_chamfer_dia <= minimum_target_dia:
+            st.error("Backoff is too large. Target chamfer diameter must be larger than the existing hole/tool pilot diameter.")
+            invalid_hole_chamfer_inputs = True
 
-        if base_depth_mode == "Auto from Selected Tool" and tool_mode == "Custom Chamfer / Spot Drill":
-            st.warning(
-                "Auto base depth is not available in Custom Chamfer / Spot Drill mode. "
-                "Use Manual mode or select a Center Drill Preset or Spot Drill Preset."
-            )
+        if tool_mode == "Center Drill Preset" and tool_pilot_length_c is not None and tool_pilot_length_c < 0:
+            st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
             invalid_hole_chamfer_inputs = True
 
         if not invalid_hole_chamfer_inputs:
             half_angle = math.radians(included_angle_deg / 2)
             cleanup_depth = calc_hole_chamfer_cleanup_depth(
-                finished_dia_with_allowance,
+                target_chamfer_dia,
                 existing_hole_dia,
                 included_angle_deg,
             )
 
-            if base_depth_mode == "Auto from Selected Tool":
-                if tool_mode == "Center Drill Preset":
+            if tool_mode == "Center Drill Preset":
+                if base_depth_mode == "Auto from Selected Tool":
                     if existing_hole_dia <= center_drill_pilot_dia:
                         auto_base_warning = (
                             "Existing hole diameter is smaller than or equal to the center drill pilot diameter. "
@@ -878,48 +730,14 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     base_hole_depth = tool_pilot_length_c + (
                         (existing_hole_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
                     )
-                    full_tool_depth = tool_pilot_length_c + (
-                        (target_chamfer_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
-                    )
-                    final_program_z = -full_tool_depth
-                else:
-                    if existing_hole_dia <= spot_drill_tip_dia:
-                        auto_base_warning = (
-                            "Existing hole diameter is smaller than or equal to the spot drill tip diameter. "
-                            "Auto base depth may not be valid; verify tool fit or use Manual mode."
-                        )
 
-                    base_hole_depth = (existing_hole_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle))
-                    final_program_z = -(base_hole_depth + cleanup_depth)
-
-                if base_hole_depth < 0:
-                    invalid_hole_chamfer_inputs = True
-            else:
-                final_program_z = -(base_hole_depth + cleanup_depth)
-
-        if not invalid_hole_chamfer_inputs:
-            if auto_base_warning:
-                st.warning(auto_base_warning)
-
-            r1, r2 = st.columns(2)
-            r1.metric("Chamfer Cleanup Axial Depth", f"{cleanup_depth:.4f}")
-            if base_depth_mode == "Auto from Selected Tool":
-                r2.metric("Auto Base Pilot / Hole Depth from Face", f"{base_hole_depth:.4f}")
-            else:
-                r2.metric("Base Pilot / Hole Depth", f"{base_hole_depth:.4f}")
-
-            r3, r4 = st.columns(2)
-            r3.metric("Finished Diameter With Allowance", f"{finished_dia_with_allowance:.4f}")
-            r4.metric("Final Program Z", f"{final_program_z:.4f}")
-
-            if tool_mode == "Center Drill Preset":
-                center_drill_depth_past_c = abs(final_program_z) - tool_pilot_length_c
-                center_drill_diameter_at_final_z = center_drill_pilot_dia + (
-                    2 * center_drill_depth_past_c * math.tan(half_angle)
+                full_tool_depth = tool_pilot_length_c + (
+                    (target_chamfer_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
                 )
-
-                c1, c2 = st.columns(2)
-                c1.metric("Diameter at Final Program Z", f"{center_drill_diameter_at_final_z:.4f}")
+                final_program_z = -full_tool_depth
+                diameter_at_final_z = center_drill_pilot_dia + (
+                    2 * (abs(final_program_z) - tool_pilot_length_c) * math.tan(half_angle)
+                )
 
                 if mastercam_check_z != 0:
                     if abs(mastercam_check_z) <= tool_pilot_length_c:
@@ -928,25 +746,76 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                         diameter_at_mastercam_z = center_drill_pilot_dia + (
                             2 * (abs(mastercam_check_z) - tool_pilot_length_c) * math.tan(half_angle)
                         )
-                        c2.metric("Diameter at Mastercam Check Z", f"{diameter_at_mastercam_z:.4f}")
+            elif tool_mode == "Spot Drill Preset":
+                if base_depth_mode == "Auto from Selected Tool":
+                    if existing_hole_dia <= spot_drill_tip_dia:
+                        auto_base_warning = (
+                            "Existing hole diameter is smaller than or equal to the spot drill tip diameter. "
+                            "Auto base depth may not be valid; verify tool fit or use Manual mode."
+                        )
+
+                    base_hole_depth = (existing_hole_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle))
+                    final_program_z = -((target_chamfer_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle)))
+                else:
+                    final_program_z = -(base_hole_depth + cleanup_depth)
+
+                diameter_at_final_z = spot_drill_tip_dia + (
+                    2 * abs(final_program_z) * math.tan(half_angle)
+                )
+            else:
+                final_program_z = -(base_hole_depth + cleanup_depth)
+                diameter_at_final_z = target_chamfer_dia
+
+        if not invalid_hole_chamfer_inputs:
+            if auto_base_warning:
+                st.warning(auto_base_warning)
+
+            result_labels = ["Target Chamfer Diameter", "Final Program Z", "Diameter at Final Program Z"]
+            result_values = [
+                f"{target_chamfer_dia:.4f}",
+                f"{final_program_z:.4f}",
+                f"{diameter_at_final_z:.4f}",
+            ]
+
+            if diameter_at_mastercam_z is not None:
+                result_labels.append("Diameter at Mastercam Check Z")
+                result_values.append(f"{diameter_at_mastercam_z:.4f}")
+
+            result_cols = st.columns(len(result_labels))
+            for col, label, value in zip(result_cols, result_labels, result_values):
+                col.metric(label, value)
+
+            detail_col1, detail_col2 = st.columns(2)
+            if cleanup_depth is not None:
+                detail_col1.metric("Chamfer Cleanup Axial Depth", f"{cleanup_depth:.4f}")
+
+            if base_depth_mode == "Auto from Selected Tool" and base_hole_depth is not None:
+                detail_col2.metric("Auto Base Pilot / Hole Depth from Face", f"{base_hole_depth:.4f}")
+            elif base_depth_mode == "Manual":
+                detail_col2.metric("Base Pilot / Hole Depth", f"{base_hole_depth:.4f}")
 
             st.caption(
                 "Auto base depth is calculated from the selected tool geometry at the existing hole diameter. "
                 "Manual mode lets you override this when your setup or Mastercam reference is different."
             )
             st.caption(
-                "Formula: final_z = -(base_depth + cleanup_depth), where "
-                "cleanup_depth = (finished_dia - existing_hole_dia) / (2 * tan(included_angle / 2))."
+                "Final Program Z is calculated from the target chamfer diameter after backoff/clearance is subtracted."
             )
 
-            if center_drill_body_dia is not None and finished_dia_with_allowance > center_drill_body_dia:
+            if center_drill_body_dia is not None and finished_chamfer_dia > center_drill_body_dia:
                 st.warning("Finished chamfer diameter exceeds selected center drill body/bell diameter.")
+
+            if center_drill_body_dia is not None and target_chamfer_dia > center_drill_body_dia:
+                st.warning("Target chamfer diameter exceeds selected center drill body/bell diameter.")
 
             if center_drill_pilot_dia is not None and center_drill_pilot_dia > existing_hole_dia:
                 st.warning("Center drill pilot diameter is larger than the existing hole. Verify tool fit before programming.")
 
-            if spot_drill_tool_dia and finished_dia_with_allowance > spot_drill_tool_dia:
+            if spot_drill_tool_dia and finished_chamfer_dia > spot_drill_tool_dia:
                 st.warning("Finished chamfer diameter exceeds selected spot drill tool diameter.")
+
+            if spot_drill_tool_dia and target_chamfer_dia > spot_drill_tool_dia:
+                st.warning("Target chamfer diameter exceeds selected spot drill tool diameter.")
 
     with st.container(border=True):
         st.markdown("### Centered Slot / Keyway - Both Edges")
