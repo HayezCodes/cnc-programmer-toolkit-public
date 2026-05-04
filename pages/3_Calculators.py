@@ -874,6 +874,23 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                 format="%.4f",
                 key="centered_slot_cleanup_allowance"
             )
+        with col3:
+            centered_slot_tool_cutting_length = st.number_input(
+                "Tool Cutting / Taper Length",
+                min_value=0.0000,
+                value=0.0575,
+                step=0.0005,
+                format="%.4f",
+                key="centered_slot_tool_cutting_length"
+            )
+            centered_slot_tool_shank_diameter = st.number_input(
+                "Tool Shank / Max Diameter",
+                min_value=0.0000,
+                value=0.2500,
+                step=0.0010,
+                format="%.4f",
+                key="centered_slot_tool_shank_dia"
+            )
 
         centered_slot_half_width = centered_slot_width / 2
         centered_slot_tip_radius = centered_slot_tool_tip_diameter / 2
@@ -895,6 +912,14 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
             st.error("Tool tip diameter must be zero or positive.")
             centered_slot_invalid = True
 
+        if centered_slot_tool_cutting_length < 0:
+            st.error("Tool cutting / taper length must be zero or positive.")
+            centered_slot_invalid = True
+
+        if centered_slot_tool_shank_diameter < 0:
+            st.error("Tool shank / max diameter must be zero or positive.")
+            centered_slot_invalid = True
+
         if centered_slot_tip_radius >= centered_slot_half_width:
             st.error("Tool tip diameter is too large for this slot width.")
             centered_slot_invalid = True
@@ -910,6 +935,13 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                 + centered_slot_cleanup_allowance
             )
             centered_slot_final_program_z = centered_slot_top_reference_z - centered_slot_depth_from_top
+            centered_slot_max_clean_chamfer_before_shoulder = (
+                centered_slot_tool_cutting_length - centered_slot_reach_to_edge_depth
+            )
+            centered_slot_minimum_cutting_length_required = centered_slot_depth_from_top
+            centered_slot_shoulder_overtravel = (
+                centered_slot_depth_from_top - centered_slot_tool_cutting_length
+            )
 
             primary_col = st.columns(1)[0]
             primary_col.metric("Final Program Z", format_shop_decimal(centered_slot_final_program_z))
@@ -919,6 +951,34 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
             r2.metric("Tip Radius", format_shop_decimal(centered_slot_tip_radius))
             r3.metric("Reach-to-Edge Depth", format_shop_decimal(centered_slot_reach_to_edge_depth))
             r4.metric("Calculated Depth from Top", format_shop_decimal(centered_slot_depth_from_top))
+
+            r5, r6, r7 = st.columns(3)
+            r5.metric(
+                "Max Clean Chamfer Before Shoulder",
+                format_shop_decimal(centered_slot_max_clean_chamfer_before_shoulder)
+            )
+            r6.metric(
+                "Minimum Cutting Length Required",
+                format_shop_decimal(centered_slot_minimum_cutting_length_required)
+            )
+            r7.metric("Shoulder Overtravel", format_shop_decimal(centered_slot_shoulder_overtravel))
+
+            if centered_slot_depth_from_top > centered_slot_tool_cutting_length:
+                st.warning("Calculated depth exceeds the tool cutting/taper length. The shank/body may enter the cut.")
+
+            if centered_slot_max_clean_chamfer_before_shoulder < centered_slot_chamfer_size:
+                st.warning(
+                    "Requested chamfer is larger than this tool can cut cleanly before the shoulder/body enters the slot."
+                )
+
+            if (
+                centered_slot_tool_shank_diameter > centered_slot_width
+                and centered_slot_depth_from_top > centered_slot_tool_cutting_length
+            ):
+                st.warning(
+                    "Tool body/shank is larger than the slot width and the calculated depth goes past the taper length. "
+                    "Verify clearance in Mastercam before running."
+                )
 
             with st.expander("Mastercam / Existing Z Check", expanded=False):
                 centered_slot_existing_program_z = st.number_input(
