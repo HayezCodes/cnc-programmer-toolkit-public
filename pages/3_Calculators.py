@@ -823,6 +823,9 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
             "This mode is for running the tool down the center of a slot/keyway so both top edges are chamfered at the same time. "
             "Use Keyway / Shaft Edge Mode for chamfering only one edge from a wall."
         )
+        st.caption(
+            "For centered slot/keyway chamfers, the tool must first reach both slot edges before it starts creating the requested edge drop."
+        )
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -835,12 +838,16 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                 key="centered_slot_width"
             )
             centered_slot_chamfer_size = st.number_input(
-                "Desired Chamfer Size / Edge Depth",
+                "Desired Chamfer Size / Vertical Edge Drop",
                 min_value=0.0001,
                 value=0.0375,
                 step=0.0010,
                 format="%.4f",
                 key="centered_slot_chamfer_size"
+            )
+            st.caption(
+                "Enter the vertical chamfer drop down the slot wall. Do not use the print's overall chamfer width unless it "
+                "represents the same vertical edge drop."
             )
             centered_slot_top_reference_z = st.number_input(
                 "Top Reference Z",
@@ -979,6 +986,11 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                     "Tool body/shank is larger than the slot width and the calculated depth goes past the taper length. "
                     "Verify clearance in Mastercam before running."
                 )
+
+            st.caption(
+                "Example: slot width 0.1885, tool tip diameter 0.1350, 90 deg included tool, vertical edge drop 0.0234375 "
+                "gives reach-to-edge depth 0.0268, calculated depth from top 0.0502, and final program Z about -0.0502."
+            )
 
             with st.expander("Mastercam / Existing Z Check", expanded=False):
                 centered_slot_existing_program_z = st.number_input(
