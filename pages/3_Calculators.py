@@ -992,37 +992,6 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                 "gives reach-to-edge depth 0.0268, calculated depth from top 0.0502, and final program Z about -0.0502."
             )
 
-            with st.expander("Mastercam / Existing Z Check", expanded=False):
-                centered_slot_existing_program_z = st.number_input(
-                    "Existing Programmed Z Depth",
-                    value=-0.1100,
-                    step=0.0010,
-                    format="%.4f",
-                    key="centered_slot_existing_z"
-                )
-
-                centered_slot_estimated_chamfer = (
-                    abs(centered_slot_existing_program_z - centered_slot_top_reference_z)
-                    - centered_slot_reach_to_edge_depth
-                )
-                centered_slot_effective_tip_radius_needed = (
-                    centered_slot_half_width
-                    - ((abs(centered_slot_existing_program_z - centered_slot_top_reference_z)
-                    - centered_slot_chamfer_size
-                    - centered_slot_cleanup_allowance) * math.tan(centered_slot_half_angle))
-                )
-                centered_slot_effective_tip_diameter_needed = 2 * centered_slot_effective_tip_radius_needed
-
-                check_col1, check_col2 = st.columns(2)
-                check_col1.metric("Estimated Chamfer From Existing Z", format_shop_decimal(centered_slot_estimated_chamfer))
-                check_col2.metric(
-                    "Effective Tip Diameter Needed For Existing Z",
-                    format_shop_decimal(centered_slot_effective_tip_diameter_needed)
-                )
-
-                if centered_slot_estimated_chamfer < 0:
-                    st.warning("Existing Z is not deep enough for the tool to reach the slot edges.")
-
     with st.container(border=True):
         st.markdown("### Keyway / Shaft Edge Mode")
         st.write("Use this when chamfering the straight edge of a keyway or slot on a round shaft.")
