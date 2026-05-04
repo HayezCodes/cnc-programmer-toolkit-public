@@ -54,6 +54,17 @@ def calc_hole_chamfer_cleanup_depth(
     return (finished_dia - existing_hole_dia) / (2 * tangent_value)
 
 
+SPOT_DRILL_PRESET_ANGLES = {
+    "60°": 60.0,
+    "82°": 82.0,
+    "90°": 90.0,
+    "100°": 100.0,
+    "118°": 118.0,
+    "120°": 120.0,
+    "140°": 140.0,
+}
+
+
 def format_woodruff_range(minimum: float, maximum: float) -> str:
     return f"{minimum:.4f} - {maximum:.4f}"
 
@@ -106,11 +117,11 @@ st.title("Calculators")
 st.caption("Empower MFG - Built for Joshua")
 st.markdown("</div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
-    ["Triangle", "Keyway", "Woodruff Key", "Center Drill", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
+tab_triangle, tab_keyway, tab_woodruff, tab_chamfer, tab_breakthrough, tab_convert = st.tabs(
+    ["Triangle", "Keyway", "Woodruff Key", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
 )
 
-with tab1:
+with tab_triangle:
     st.subheader("Triangle Calculator")
 
     st.markdown(
@@ -249,7 +260,7 @@ Right angle is at the bottom left.
     c4.metric("Angle", f"{angle:.4f}")
     c5.metric("Other Angle", f"{other_angle:.4f}")
 
-with tab2:
+with tab_keyway:
     st.subheader("Keyway Calculator")
 
     st.markdown(
@@ -412,7 +423,7 @@ Built around the print styles you actually use. Main output is the X value (dia)
     st.write("X Value (Dia) is the diameter value from spindle centerline to the keyway floor for programming use.")
     st.write("Width Chord + Depth Below Chord matches the workflow where you model the width as a chord, then step deeper from that line.")
 
-with tab3:
+with tab_woodruff:
     st.subheader("Woodruff Key Lookup")
 
     st.markdown(
@@ -454,95 +465,7 @@ Look up ANSI Woodruff key sizes by key number or by nominal size. Good for check
         "Cutter diameter and keyseat width show ANSI min/max ranges. Shaft depth, key above shaft, and hub depth include ANSI tolerances."
     )
 
-with tab4:
-    st.subheader("Center Drill Calculator")
-
-    st.markdown(
-        """
-<div style="font-size:0.92rem; line-height:1.35;">
-Use bell / body diameter like the shop talks about it. Calculator gives pilot hole depth only, or works backwards from pilot hole depth.
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        preset = st.selectbox(
-            "Center Drill Size",
-            get_center_drill_options(include_custom=True),
-            format_func=center_drill_select_label,
-            key="cd_preset"
-        )
-
-        if preset != "Custom":
-            preset_data = CENTER_DRILL_PRESETS[preset]
-            angle = preset_data["angle"]
-            pilot_dia = preset_data["pilot"]
-            body_dia = preset_data.get("bell", preset_data["body"])
-            drill_len = preset_data["pilot_length"]
-
-            st.metric("Style", preset_data["style"])
-            st.metric("Included Angle", f"{angle:.1f} deg")
-            st.metric("Pilot Dia", f"{pilot_dia:.4f}")
-            st.metric("Body / Bell Dia", f"{body_dia:.4f}")
-            st.metric("Pilot Length (C)", f"{drill_len:.4f}")
-        else:
-            angle = st.number_input("Included Angle (deg)", min_value=1.0, max_value=179.0, value=60.0, step=1.0, format="%.1f", key="cd_angle")
-            pilot_dia = st.number_input("Pilot Diameter", min_value=0.0001, value=0.1250, step=0.0010, format="%.4f", key="cd_pilot")
-            body_dia = st.number_input("Body / Bell Diameter", min_value=0.0001, value=0.2500, step=0.0010, format="%.4f", key="cd_body")
-            drill_len = st.number_input("Drill Length (C)", min_value=0.0001, value=0.1250, step=0.0010, format="%.4f", key="cd_drill_len")
-
-    with col2:
-        mode = st.selectbox("Solve For", ["Pilot Hole Depth", "Bell / Body Diameter"], key="cd_mode")
-
-        if mode == "Pilot Hole Depth":
-            bell_dia = st.number_input("Bell / Body Diameter Target", min_value=0.0001, value=0.1500, step=0.0010, format="%.4f", key="cd_bell_target")
-        else:
-            pilot_hole_depth_input = st.number_input("Pilot Hole Depth Target", min_value=0.0001, value=0.1000, step=0.0010, format="%.4f", key="cd_pilot_depth_target")
-
-    st.markdown("---")
-
-    half_angle = math.radians(angle / 2)
-
-    if mode == "Pilot Hole Depth":
-        if bell_dia <= pilot_dia:
-            st.error("Bell / body diameter must be larger than pilot diameter.")
-        else:
-            chamfer_depth = (bell_dia - pilot_dia) / (2 * math.tan(half_angle))
-            pilot_hole_depth = chamfer_depth + drill_len
-
-            st.markdown("### Result")
-            st.metric("Pilot Hole Depth", f"{pilot_hole_depth:.4f}")
-
-            st.markdown("### Notes")
-            st.write(f"Pilot diameter is {pilot_dia:.4f}.")
-            st.write(f"Body / bell diameter of tool is {body_dia:.4f}.")
-            st.write(f"Drill length (C) is {drill_len:.4f}.")
-
-            if bell_dia > body_dia:
-                st.warning("Bell / body diameter target exceeds tool body diameter.")
-
-    else:
-        if pilot_hole_depth_input <= drill_len:
-            st.error("Pilot hole depth must be greater than drill length (C).")
-        else:
-            chamfer_depth = pilot_hole_depth_input - drill_len
-            bell_dia_calc = (2 * chamfer_depth * math.tan(half_angle)) + pilot_dia
-
-            st.markdown("### Result")
-            st.metric("Bell / Body Diameter", f"{bell_dia_calc:.4f}")
-
-            st.markdown("### Notes")
-            st.write(f"Pilot diameter is {pilot_dia:.4f}.")
-            st.write(f"Body / bell diameter of tool is {body_dia:.4f}.")
-            st.write(f"Drill length (C) is {drill_len:.4f}.")
-
-            if bell_dia_calc > body_dia:
-                st.warning("Calculated bell / body diameter exceeds tool body diameter.")
-
-with tab5:
+with tab_chamfer:
     st.subheader("Chamfer Calculator")
 
     st.markdown(
@@ -707,6 +630,92 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             "to grow the existing hole diameter to the finished chamfer diameter."
         )
 
+        tool_mode = st.selectbox(
+            "Tool Mode",
+            [
+                "Custom Chamfer / Spot Drill",
+                "Center Drill Preset",
+                "Spot Drill Preset",
+            ],
+            key="hole_chamfer_tool_mode"
+        )
+
+        included_angle_deg = 90.0
+        center_drill_pilot_dia = None
+        center_drill_body_dia = None
+        spot_drill_tool_dia = None
+
+        if tool_mode == "Custom Chamfer / Spot Drill":
+            angle_col1, angle_col2 = st.columns(2)
+            with angle_col1:
+                included_angle_deg = st.number_input(
+                    "Chamfer Included Angle (deg)",
+                    min_value=0.1,
+                    max_value=179.9,
+                    value=90.0,
+                    step=1.0,
+                    format="%.1f",
+                    key="hole_chamfer_custom_included_angle"
+                )
+            with angle_col2:
+                st.metric("Angle Source", "Custom")
+        elif tool_mode == "Center Drill Preset":
+            center_drill_preset = st.selectbox(
+                "Center Drill Size",
+                get_center_drill_options(include_custom=False),
+                format_func=center_drill_select_label,
+                key="hole_chamfer_center_drill_preset"
+            )
+            center_drill_data = CENTER_DRILL_PRESETS[center_drill_preset]
+            included_angle_deg = center_drill_data["angle"]
+            center_drill_pilot_dia = center_drill_data["pilot"]
+            center_drill_body_dia = center_drill_data.get("bell", center_drill_data["body"])
+            center_drill_pilot_length = center_drill_data["pilot_length"]
+
+            preset_col1, preset_col2, preset_col3 = st.columns(3)
+            preset_col1.metric("Style", center_drill_data["style"])
+            preset_col2.metric("Included Angle", f"{included_angle_deg:.1f} deg")
+            preset_col3.metric("Pilot Diameter", f"{center_drill_pilot_dia:.4f}")
+
+            preset_col4, preset_col5 = st.columns(2)
+            preset_col4.metric("Body / Bell Diameter", f"{center_drill_body_dia:.4f}")
+            preset_col5.metric("Pilot Length (C)", f"{center_drill_pilot_length:.4f}")
+
+            st.caption("Existing hole diameter is the hole already in the part. Center drill pilot diameter is tool geometry.")
+        else:
+            spot_drill_angle_source = st.selectbox(
+                "Spot Drill Angle Preset",
+                list(SPOT_DRILL_PRESET_ANGLES.keys()) + ["Custom Spot Drill Angle"],
+                key="hole_chamfer_spot_drill_angle_source"
+            )
+
+            tool_col1, tool_col2 = st.columns(2)
+            with tool_col1:
+                if spot_drill_angle_source == "Custom Spot Drill Angle":
+                    included_angle_deg = st.number_input(
+                        "Chamfer Included Angle (deg)",
+                        min_value=0.1,
+                        max_value=179.9,
+                        value=90.0,
+                        step=1.0,
+                        format="%.1f",
+                        key="hole_chamfer_spot_drill_custom_angle"
+                    )
+                else:
+                    included_angle_deg = SPOT_DRILL_PRESET_ANGLES[spot_drill_angle_source]
+                    st.metric("Included Angle", f"{included_angle_deg:.1f} deg")
+            with tool_col2:
+                spot_drill_tool_dia = st.number_input(
+                    "Spot Drill Tool Diameter",
+                    min_value=0.0000,
+                    value=0.0000,
+                    step=0.0010,
+                    format="%.4f",
+                    key="hole_chamfer_spot_drill_tool_dia"
+                )
+
+            st.caption("Use Spot Drill Tool Diameter only if you want a tool-size warning against the finished chamfer diameter.")
+
         col1, col2, col3 = st.columns(3)
         with col1:
             existing_hole_dia = st.number_input(
@@ -734,15 +743,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 format="%.4f",
                 key="hole_chamfer_finished_dia"
             )
-            included_angle_deg = st.number_input(
-                "Chamfer Included Angle (deg)",
-                min_value=0.1,
-                max_value=179.9,
-                value=90.0,
-                step=1.0,
-                format="%.1f",
-                key="hole_chamfer_included_angle"
-            )
+            st.metric("Active Included Angle", f"{included_angle_deg:.1f} deg")
         with col3:
             cleanup_allowance_dia = st.number_input(
                 "Cleanup Allowance on Diameter",
@@ -769,7 +770,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             invalid_hole_chamfer_inputs = True
 
         if finished_dia_with_allowance <= existing_hole_dia:
-            st.warning("Finished diameter with allowance must still be larger than the existing hole diameter.")
+            st.error("Finished diameter with allowance must be larger than the existing hole diameter.")
             invalid_hole_chamfer_inputs = True
 
         if not invalid_hole_chamfer_inputs:
@@ -792,6 +793,15 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 "Formula: final_z = -(base_depth + cleanup_depth), where "
                 "cleanup_depth = (finished_dia - existing_hole_dia) / (2 * tan(included_angle / 2))."
             )
+
+            if center_drill_body_dia is not None and finished_chamfer_dia > center_drill_body_dia:
+                st.warning("Finished chamfer diameter exceeds selected center drill body/bell diameter.")
+
+            if center_drill_pilot_dia is not None and center_drill_pilot_dia > existing_hole_dia:
+                st.warning("Center drill pilot diameter is larger than the existing hole. Verify tool fit before programming.")
+
+            if spot_drill_tool_dia and finished_dia_with_allowance > spot_drill_tool_dia:
+                st.warning("Finished diameter with allowance exceeds the spot drill tool diameter.")
 
     with st.container(border=True):
         st.markdown("### Keyway / Shaft Edge Mode")
@@ -896,7 +906,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     "This tool will not make that chamfer cleanly."
                 )
 
-with tab6:
+with tab_breakthrough:
     st.subheader("Drill Breakthrough Calculator")
 
     st.markdown(
@@ -927,7 +937,7 @@ Use this to figure the extra drill travel needed after the point first reaches t
 
     st.write("Total drill depth is referenced from the moment the drill point first contacts the back side of the part.")
 
-with tab7:
+with tab_convert:
     st.subheader("IN ↔ MM Converter")
 
     st.markdown(
