@@ -651,7 +651,10 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
         center_drill_pilot_dia = None
         center_drill_body_dia = None
         center_drill_pilot_length = None
-        spot_drill_tool_dia = None
+        tool_pilot_length_c = None
+        mastercam_check_z = 0.0
+        spot_drill_tip_dia = 0.0
+        spot_drill_tool_dia = 0.0
 
         if tool_mode == "Custom Chamfer / Spot Drill":
             angle_col1, angle_col2 = st.columns(2)
@@ -680,6 +683,11 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             center_drill_body_dia = center_drill_data.get("bell", center_drill_data["body"])
             center_drill_pilot_length = center_drill_data["pilot_length"]
 
+            if st.session_state.get("hole_chamfer_center_drill_preset_state") != center_drill_preset:
+                st.session_state["hole_chamfer_center_drill_c_value"] = center_drill_pilot_length
+                st.session_state["hole_chamfer_center_drill_mastercam_check_z"] = -0.6550 if center_drill_preset == "8" else 0.0000
+                st.session_state["hole_chamfer_center_drill_preset_state"] = center_drill_preset
+
             preset_col1, preset_col2, preset_col3 = st.columns(3)
             preset_col1.metric("Style", center_drill_data["style"])
             preset_col2.metric("Included Angle", f"{included_angle_deg:.1f} deg")
@@ -689,7 +697,30 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             preset_col4.metric("Body / Bell Diameter", f"{center_drill_body_dia:.4f}")
             preset_col5.metric("Pilot Length (C)", f"{center_drill_pilot_length:.4f}")
 
+            tool_col1, tool_col2 = st.columns(2)
+            with tool_col1:
+                tool_pilot_length_c = st.number_input(
+                    "Tool Pilot Length / Full Depth Offset (C)",
+                    min_value=0.0000,
+                    value=st.session_state["hole_chamfer_center_drill_c_value"],
+                    step=0.0010,
+                    format="%.4f",
+                    key="hole_chamfer_center_drill_c_value"
+                )
+            with tool_col2:
+                mastercam_check_z = st.number_input(
+                    "Mastercam Check Z",
+                    value=st.session_state["hole_chamfer_center_drill_mastercam_check_z"],
+                    step=0.0010,
+                    format="%.4f",
+                    key="hole_chamfer_center_drill_mastercam_check_z"
+                )
+
             st.caption("Existing hole diameter is the hole already in the part. Center drill pilot diameter is tool geometry.")
+            st.caption(
+                "Final Program Z uses Tool Pilot Length / Full Depth Offset (C). Adjust C if your Mastercam tool model "
+                "or actual center drill does not match the preset."
+            )
         else:
             spot_drill_angle_source = st.selectbox(
                 "Spot Drill Angle Preset",
@@ -697,7 +728,7 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                 key="hole_chamfer_spot_drill_angle_source"
             )
 
-            tool_col1, tool_col2 = st.columns(2)
+            tool_col1, tool_col2, tool_col3 = st.columns(3)
             with tool_col1:
                 if spot_drill_angle_source == "Custom Spot Drill Angle":
                     included_angle_deg = st.number_input(
@@ -713,8 +744,17 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     included_angle_deg = SPOT_DRILL_PRESET_ANGLES[spot_drill_angle_source]
                     st.metric("Included Angle", f"{included_angle_deg:.1f} deg")
             with tool_col2:
+                spot_drill_tip_dia = st.number_input(
+                    "Spot Drill Tool Tip Diameter",
+                    min_value=0.0000,
+                    value=0.0000,
+                    step=0.0010,
+                    format="%.4f",
+                    key="hole_chamfer_spot_drill_tip_dia"
+                )
+            with tool_col3:
                 spot_drill_tool_dia = st.number_input(
-                    "Spot Drill Tool Diameter",
+                    "Spot Drill Tool Diameter (Optional)",
                     min_value=0.0000,
                     value=0.0000,
                     step=0.0010,
@@ -722,7 +762,10 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     key="hole_chamfer_spot_drill_tool_dia"
                 )
 
-            st.caption("Use Spot Drill Tool Diameter only if you want a tool-size warning against the finished chamfer diameter.")
+            st.caption(
+                "Spot Drill Tool Tip Diameter is used for auto base depth. Spot Drill Tool Diameter is only for a size warning "
+                "against the finished chamfer diameter."
+            )
 
         default_base_depth_mode = "Manual" if tool_mode == "Custom Chamfer / Spot Drill" else "Auto from Selected Tool"
         if st.session_state.get("hole_chamfer_base_depth_mode_tool_mode") != tool_mode:
@@ -777,9 +820,12 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             )
 
         finished_dia_with_allowance = finished_chamfer_dia + cleanup_allowance_dia
+        target_chamfer_dia = finished_dia_with_allowance
 
         invalid_hole_chamfer_inputs = False
         auto_base_warning = None
+        center_drill_diameter_at_final_z = None
+        diameter_at_mastercam_z = None
 
         if finished_chamfer_dia <= existing_hole_dia:
             st.error("Finished chamfer diameter must be larger than existing hole diameter.")
@@ -796,6 +842,15 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
         if finished_dia_with_allowance <= existing_hole_dia:
             st.error("Finished diameter with allowance must be larger than the existing hole diameter.")
             invalid_hole_chamfer_inputs = True
+
+        if tool_mode == "Center Drill Preset":
+            if tool_pilot_length_c is not None and tool_pilot_length_c < 0:
+                st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
+                invalid_hole_chamfer_inputs = True
+
+            if target_chamfer_dia <= center_drill_pilot_dia:
+                st.error("Target diameter must be larger than the center drill pilot diameter.")
+                invalid_hole_chamfer_inputs = True
 
         if base_depth_mode == "Auto from Selected Tool" and tool_mode == "Custom Chamfer / Spot Drill":
             st.warning(
@@ -820,22 +875,27 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                             "Auto base depth may not be valid; verify tool fit or use Manual mode."
                         )
 
-                    base_hole_depth = center_drill_pilot_length + (
+                    base_hole_depth = tool_pilot_length_c + (
                         (existing_hole_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
                     )
+                    full_tool_depth = tool_pilot_length_c + (
+                        (target_chamfer_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
+                    )
+                    final_program_z = -full_tool_depth
                 else:
-                    if existing_hole_dia <= spot_drill_tool_dia:
+                    if existing_hole_dia <= spot_drill_tip_dia:
                         auto_base_warning = (
                             "Existing hole diameter is smaller than or equal to the spot drill tip diameter. "
                             "Auto base depth may not be valid; verify tool fit or use Manual mode."
                         )
 
-                    base_hole_depth = (existing_hole_dia - spot_drill_tool_dia) / (2 * math.tan(half_angle))
+                    base_hole_depth = (existing_hole_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle))
+                    final_program_z = -(base_hole_depth + cleanup_depth)
 
                 if base_hole_depth < 0:
                     invalid_hole_chamfer_inputs = True
-
-            final_program_z = -(base_hole_depth + cleanup_depth)
+            else:
+                final_program_z = -(base_hole_depth + cleanup_depth)
 
         if not invalid_hole_chamfer_inputs:
             if auto_base_warning:
@@ -851,6 +911,24 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
             r3, r4 = st.columns(2)
             r3.metric("Finished Diameter With Allowance", f"{finished_dia_with_allowance:.4f}")
             r4.metric("Final Program Z", f"{final_program_z:.4f}")
+
+            if tool_mode == "Center Drill Preset":
+                center_drill_depth_past_c = abs(final_program_z) - tool_pilot_length_c
+                center_drill_diameter_at_final_z = center_drill_pilot_dia + (
+                    2 * center_drill_depth_past_c * math.tan(half_angle)
+                )
+
+                c1, c2 = st.columns(2)
+                c1.metric("Diameter at Final Program Z", f"{center_drill_diameter_at_final_z:.4f}")
+
+                if mastercam_check_z != 0:
+                    if abs(mastercam_check_z) <= tool_pilot_length_c:
+                        st.warning("Mastercam Check Z is shallower than Tool Pilot Length / Full Depth Offset (C). The tool has not reached the chamfer cone yet.")
+                    else:
+                        diameter_at_mastercam_z = center_drill_pilot_dia + (
+                            2 * (abs(mastercam_check_z) - tool_pilot_length_c) * math.tan(half_angle)
+                        )
+                        c2.metric("Diameter at Mastercam Check Z", f"{diameter_at_mastercam_z:.4f}")
 
             st.caption(
                 "Auto base depth is calculated from the selected tool geometry at the existing hole diameter. "

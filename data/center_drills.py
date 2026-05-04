@@ -8,7 +8,7 @@ CENTER_DRILL_PRESETS = {
     "5": {"style": "Plain", "angle": 60.0, "pilot": 0.187500, "body": 0.4375, "pilot_length": 0.187500},
     "6": {"style": "Plain", "angle": 60.0, "pilot": 0.218750, "body": 0.5000, "pilot_length": 0.218750},
     "7": {"style": "Plain", "angle": 60.0, "pilot": 0.250000, "body": 0.6250, "pilot_length": 0.250000},
-    "8": {"style": "Plain", "angle": 60.0, "pilot": 0.312500, "body": 0.7500, "pilot_length": 0.312500},
+    "8": {"style": "Plain", "angle": 60.0, "pilot": 0.312500, "body": 0.7500, "pilot_length": 0.375000},
     "9": {"style": "Plain", "angle": 60.0, "pilot": 0.375000, "body": 0.8750, "pilot_length": 0.375000},
     "10": {"style": "Plain", "angle": 60.0, "pilot": 0.500000, "body": 1.2500, "pilot_length": 0.500000},
     "11": {"style": "Bell", "angle": 120.0, "pilot": 0.046875, "body": 0.1250, "bell": 0.1900, "pilot_length": 0.046875},
