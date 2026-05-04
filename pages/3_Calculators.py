@@ -34,6 +34,26 @@ def safe_tangent(angle_degrees: float) -> float | None:
     return tangent_value
 
 
+def calc_hole_chamfer_cleanup_depth(
+    finished_dia: float,
+    existing_hole_dia: float,
+    included_angle_deg: float,
+) -> float:
+    if finished_dia <= existing_hole_dia:
+        raise ValueError("Finished chamfer diameter must be larger than existing hole diameter.")
+
+    if included_angle_deg <= 0 or included_angle_deg >= 180:
+        raise ValueError("Included angle must be greater than 0 and less than 180 degrees.")
+
+    half_angle_radians = math.radians(included_angle_deg / 2)
+    tangent_value = math.tan(half_angle_radians)
+
+    if abs(tangent_value) < 1e-12:
+        raise ValueError("Included angle creates an invalid chamfer calculation.")
+
+    return (finished_dia - existing_hole_dia) / (2 * tangent_value)
+
+
 def format_woodruff_range(minimum: float, maximum: float) -> str:
     return f"{minimum:.4f} - {maximum:.4f}"
 
@@ -679,6 +699,99 @@ Use this when you need the programmed depth for a chamfer mill or similar tool. 
                     )
 
                 st.write("Use Tool Contact Diameter to help with your toolpath setup, especially when dialing in a chamfer on keyway edges.")
+
+    with st.container(border=True):
+        st.markdown("### Drilled Hole Chamfer / Final Z")
+        st.write(
+            "This is for chamfering an existing drilled/pilot hole. It adds the extra axial depth required "
+            "to grow the existing hole diameter to the finished chamfer diameter."
+        )
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            existing_hole_dia = st.number_input(
+                "Existing Drilled / Pilot Hole Diameter",
+                min_value=0.0001,
+                value=0.4612,
+                step=0.0010,
+                format="%.4f",
+                key="hole_chamfer_existing_dia"
+            )
+            base_hole_depth = st.number_input(
+                "Base Pilot / Hole Depth from Face",
+                min_value=0.0000,
+                value=0.5831,
+                step=0.0010,
+                format="%.4f",
+                key="hole_chamfer_base_depth"
+            )
+        with col2:
+            finished_chamfer_dia = st.number_input(
+                "Finished Chamfer Major Diameter",
+                min_value=0.0001,
+                value=0.6250,
+                step=0.0010,
+                format="%.4f",
+                key="hole_chamfer_finished_dia"
+            )
+            included_angle_deg = st.number_input(
+                "Chamfer Included Angle (deg)",
+                min_value=0.1,
+                max_value=179.9,
+                value=90.0,
+                step=1.0,
+                format="%.1f",
+                key="hole_chamfer_included_angle"
+            )
+        with col3:
+            cleanup_allowance_dia = st.number_input(
+                "Cleanup Allowance on Diameter",
+                value=0.0000,
+                step=0.0005,
+                format="%.4f",
+                key="hole_chamfer_cleanup_allowance"
+            )
+
+        finished_dia_with_allowance = finished_chamfer_dia + cleanup_allowance_dia
+
+        invalid_hole_chamfer_inputs = False
+
+        if finished_chamfer_dia <= existing_hole_dia:
+            st.error("Finished chamfer diameter must be larger than existing hole diameter.")
+            invalid_hole_chamfer_inputs = True
+
+        if included_angle_deg <= 0 or included_angle_deg >= 180:
+            st.error("Included angle must be greater than 0 and less than 180 degrees.")
+            invalid_hole_chamfer_inputs = True
+
+        if base_hole_depth < 0:
+            st.error("Base pilot / hole depth must be zero or positive.")
+            invalid_hole_chamfer_inputs = True
+
+        if finished_dia_with_allowance <= existing_hole_dia:
+            st.warning("Finished diameter with allowance must still be larger than the existing hole diameter.")
+            invalid_hole_chamfer_inputs = True
+
+        if not invalid_hole_chamfer_inputs:
+            cleanup_depth = calc_hole_chamfer_cleanup_depth(
+                finished_dia_with_allowance,
+                existing_hole_dia,
+                included_angle_deg,
+            )
+            final_program_z = -(base_hole_depth + cleanup_depth)
+
+            r1, r2 = st.columns(2)
+            r1.metric("Chamfer Cleanup Axial Depth", f"{cleanup_depth:.4f}")
+            r2.metric("Base Pilot / Hole Depth", f"{base_hole_depth:.4f}")
+
+            r3, r4 = st.columns(2)
+            r3.metric("Finished Diameter With Allowance", f"{finished_dia_with_allowance:.4f}")
+            r4.metric("Final Program Z", f"{final_program_z:.4f}")
+
+            st.caption(
+                "Formula: final_z = -(base_depth + cleanup_depth), where "
+                "cleanup_depth = (finished_dia - existing_hole_dia) / (2 * tan(included_angle / 2))."
+            )
 
     with st.container(border=True):
         st.markdown("### Keyway / Shaft Edge Mode")
