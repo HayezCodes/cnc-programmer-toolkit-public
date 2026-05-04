@@ -868,19 +868,11 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
                 key="centered_slot_tool_tip_dia"
             )
             centered_slot_cleanup_allowance = st.number_input(
-                "Cleanup Allowance on Depth",
+                "Cleanup / Extra Depth",
                 value=0.0000,
                 step=0.0005,
                 format="%.4f",
                 key="centered_slot_cleanup_allowance"
-            )
-        with col3:
-            centered_slot_existing_program_z = st.number_input(
-                "Existing Programmed Z Depth",
-                value=-0.1100,
-                step=0.0010,
-                format="%.4f",
-                key="centered_slot_existing_z"
             )
 
         centered_slot_half_width = centered_slot_width / 2
@@ -909,28 +901,55 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
 
         if not centered_slot_invalid:
             centered_slot_half_angle = math.radians(centered_slot_tool_included_angle / 2)
+            centered_slot_reach_to_edge_depth = (
+                (centered_slot_half_width - centered_slot_tip_radius) / math.tan(centered_slot_half_angle)
+            )
             centered_slot_depth_from_top = (
-                centered_slot_chamfer_size
-                + ((centered_slot_half_width - centered_slot_tip_radius) / math.tan(centered_slot_half_angle))
+                centered_slot_reach_to_edge_depth
+                + centered_slot_chamfer_size
                 + centered_slot_cleanup_allowance
             )
             centered_slot_final_program_z = centered_slot_top_reference_z - centered_slot_depth_from_top
-            centered_slot_estimated_chamfer = (
-                abs(centered_slot_existing_program_z - centered_slot_top_reference_z)
-                - ((centered_slot_half_width - centered_slot_tip_radius) / math.tan(centered_slot_half_angle))
-            )
 
-            r1, r2 = st.columns(2)
+            primary_col = st.columns(1)[0]
+            primary_col.metric("Final Program Z", format_shop_decimal(centered_slot_final_program_z))
+
+            r1, r2, r3, r4 = st.columns(4)
             r1.metric("Half Slot Width", format_shop_decimal(centered_slot_half_width))
             r2.metric("Tip Radius", format_shop_decimal(centered_slot_tip_radius))
+            r3.metric("Reach-to-Edge Depth", format_shop_decimal(centered_slot_reach_to_edge_depth))
+            r4.metric("Calculated Depth from Top", format_shop_decimal(centered_slot_depth_from_top))
 
-            r3, r4, r5 = st.columns(3)
-            r3.metric("Centered Slot Depth from Top", format_shop_decimal(centered_slot_depth_from_top))
-            r4.metric("Final Program Z", format_shop_decimal(centered_slot_final_program_z))
-            r5.metric("Estimated Chamfer From Existing Z", format_shop_decimal(centered_slot_estimated_chamfer))
+            with st.expander("Mastercam / Existing Z Check", expanded=False):
+                centered_slot_existing_program_z = st.number_input(
+                    "Existing Programmed Z Depth",
+                    value=-0.1100,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_existing_z"
+                )
 
-            if centered_slot_estimated_chamfer < 0:
-                st.warning("Existing Z is not deep enough for the tool to reach the slot edges.")
+                centered_slot_estimated_chamfer = (
+                    abs(centered_slot_existing_program_z - centered_slot_top_reference_z)
+                    - centered_slot_reach_to_edge_depth
+                )
+                centered_slot_effective_tip_radius_needed = (
+                    centered_slot_half_width
+                    - ((abs(centered_slot_existing_program_z - centered_slot_top_reference_z)
+                    - centered_slot_chamfer_size
+                    - centered_slot_cleanup_allowance) * math.tan(centered_slot_half_angle))
+                )
+                centered_slot_effective_tip_diameter_needed = 2 * centered_slot_effective_tip_radius_needed
+
+                check_col1, check_col2 = st.columns(2)
+                check_col1.metric("Estimated Chamfer From Existing Z", format_shop_decimal(centered_slot_estimated_chamfer))
+                check_col2.metric(
+                    "Effective Tip Diameter Needed For Existing Z",
+                    format_shop_decimal(centered_slot_effective_tip_diameter_needed)
+                )
+
+                if centered_slot_estimated_chamfer < 0:
+                    st.warning("Existing Z is not deep enough for the tool to reach the slot edges.")
 
     with st.container(border=True):
         st.markdown("### Keyway / Shaft Edge Mode")
