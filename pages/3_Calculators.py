@@ -80,16 +80,27 @@ def format_shop_decimal(value: float, places: int = 4) -> str:
     return format(Decimal(str(adjusted_value)).quantize(quantizer, rounding=ROUND_HALF_UP), f".{places}f")
 
 
-def build_woodruff_display_rows(rows: list[dict]) -> list[dict]:
+def build_woodruff_primary_display_rows(rows: list[dict]) -> list[dict]:
     return [
         {
-            "Key Number": row["key_number"],
-            "Nominal Size": row["nominal_size"],
-            "Cutter Diameter": format_woodruff_range(row["cutter_diameter_min"], row["cutter_diameter_max"]),
-            "Keyseat Width": format_woodruff_range(row["keyseat_width_min"], row["keyseat_width_max"]),
-            "Shaft Depth": format_woodruff_target(row["shaft_depth"], WOODRUFF_TOLERANCES["shaft_depth"]),
-            "Key Above Shaft": format_woodruff_target(row["key_above_shaft"], WOODRUFF_TOLERANCES["key_above_shaft"]),
-            "Hub Depth": format_woodruff_target(row["hub_depth"], WOODRUFF_TOLERANCES["hub_depth"]),
+            "Key No.": row["key_number"],
+            "Nominal Size Key": row["nominal_size"],
+            "A - Shaft Width": format_woodruff_range(row["keyseat_width_min"], row["keyseat_width_max"]),
+            "B - Shaft Depth": format_woodruff_target(row["shaft_depth"], WOODRUFF_TOLERANCES["shaft_depth"]),
+            "F - Cutter Dia": format_woodruff_range(row["cutter_diameter_min"], row["cutter_diameter_max"]),
+            "C - Key Above Shaft": format_woodruff_target(row["key_above_shaft"], WOODRUFF_TOLERANCES["key_above_shaft"]),
+        }
+        for row in rows
+    ]
+
+
+def build_woodruff_hub_display_rows(rows: list[dict]) -> list[dict]:
+    return [
+        {
+            "Key No.": row["key_number"],
+            "Nominal Size Key": row["nominal_size"],
+            "D - Hub Width": format_woodruff_target(row["hub_width"], WOODRUFF_TOLERANCES["hub_width"]),
+            "E - Hub Depth": format_woodruff_target(row["hub_depth"], WOODRUFF_TOLERANCES["hub_depth"]),
         }
         for row in rows
     ]
@@ -442,6 +453,34 @@ Look up ANSI Woodruff key sizes by key number or by nominal size. Good for check
         unsafe_allow_html=True,
     )
 
+    st.markdown("### Chart Letter Guide")
+    guide_col1, guide_col2 = st.columns(2)
+    with guide_col1:
+        st.markdown(
+            """
+**Primary modeling/programming**
+
+A = shaft keyseat width
+
+B = shaft keyseat depth
+
+F = Woodruff cutter diameter
+"""
+        )
+    with guide_col2:
+        st.markdown(
+            """
+**Reference**
+
+C = key above shaft
+
+D = hub keyseat width
+
+E = hub keyseat depth
+"""
+        )
+    st.caption("Letters match ANSI B17.2 Table 10.")
+
     lookup_mode = st.radio(
         "Lookup By",
         ["Key Number", "Nominal Size"],
@@ -457,7 +496,8 @@ Look up ANSI Woodruff key sizes by key number or by nominal size. Good for check
         selected_nominal_size = st.selectbox("Nominal Size", WOODRUFF_NOMINAL_SIZES, key="woodruff_nominal_size")
         lookup_rows = get_woodruff_keys_by_nominal_size(selected_nominal_size)
 
-    display_rows = build_woodruff_display_rows(lookup_rows)
+    primary_display_rows = build_woodruff_primary_display_rows(lookup_rows)
+    hub_display_rows = build_woodruff_hub_display_rows(lookup_rows)
 
     if len(lookup_rows) == 1:
         row = lookup_rows[0]
@@ -465,11 +505,14 @@ Look up ANSI Woodruff key sizes by key number or by nominal size. Good for check
         c1.metric("Key Number", row["key_number"])
         c2.metric("Nominal Size", row["nominal_size"])
 
-    st.table(display_rows)
+    st.markdown("### Primary Modeling / Programming Values")
+    st.table(primary_display_rows)
+    with st.expander("Hub Keyseat Reference D/E", expanded=False):
+        st.table(hub_display_rows)
     st.caption(
         "Source: "
         f"{WOODRUFF_KEY_SOURCE}. "
-        "Cutter diameter and keyseat width show ANSI min/max ranges. Shaft depth, key above shaft, and hub depth include ANSI tolerances."
+        "A and F show ANSI min/max ranges. B, C, D, and E include ANSI tolerances."
     )
 
 with tab_chamfer:
