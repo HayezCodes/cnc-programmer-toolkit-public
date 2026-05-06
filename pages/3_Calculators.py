@@ -10,6 +10,11 @@ from data.woodruff_keys import (
     get_woodruff_key_by_number,
     get_woodruff_keys_by_nominal_size,
 )
+from utils.holemaking import (
+    center_drill_diameter_at_depth,
+    center_drill_total_depth_for_target,
+    derive_center_drill_c_from_full_z,
+)
 from utils.ui_helpers import render_sidebar_nav
 
 st.set_page_config(
@@ -35,37 +40,6 @@ def safe_tangent(angle_degrees: float) -> float | None:
     return tangent_value
 
 
-def calc_hole_chamfer_cleanup_depth(
-    finished_dia: float,
-    existing_hole_dia: float,
-    included_angle_deg: float,
-) -> float:
-    if finished_dia <= existing_hole_dia:
-        raise ValueError("Finished chamfer diameter must be larger than existing hole diameter.")
-
-    if included_angle_deg <= 0 or included_angle_deg >= 180:
-        raise ValueError("Included angle must be greater than 0 and less than 180 degrees.")
-
-    half_angle_radians = math.radians(included_angle_deg / 2)
-    tangent_value = math.tan(half_angle_radians)
-
-    if abs(tangent_value) < 1e-12:
-        raise ValueError("Included angle creates an invalid chamfer calculation.")
-
-    return (finished_dia - existing_hole_dia) / (2 * tangent_value)
-
-
-SPOT_DRILL_PRESET_ANGLES = {
-    "60°": 60.0,
-    "82°": 82.0,
-    "90°": 90.0,
-    "100°": 100.0,
-    "118°": 118.0,
-    "120°": 120.0,
-    "140°": 140.0,
-}
-
-
 def format_woodruff_range(minimum: float, maximum: float) -> str:
     return f"{minimum:.4f} - {maximum:.4f}"
 
@@ -78,6 +52,49 @@ def format_shop_decimal(value: float, places: int = 4) -> str:
     quantizer = Decimal("1").scaleb(-places)
     adjusted_value = value + 1e-12 if value >= 0 else value - 1e-12
     return format(Decimal(str(adjusted_value)).quantize(quantizer, rounding=ROUND_HALF_UP), f".{places}f")
+
+
+def get_center_drill_full_target_diameter(center_drill_data: dict) -> float:
+    return center_drill_data.get("bell", center_drill_data["body"])
+
+
+def get_center_drill_default_c_details(center_drill_data: dict) -> dict:
+    chart_c = center_drill_data["pilot_length"]
+    default_c = chart_c
+    derived_c = None
+    source_label = "Chart C default"
+    status_text = "Using chart C default. Verify against Mastercam or edit C if depth does not match."
+    warning_text = None
+
+    measured_full_z = center_drill_data.get("mastercam_full_z_depth")
+    if center_drill_data.get("full_z_verified") and measured_full_z is not None:
+        full_target_dia = get_center_drill_full_target_diameter(center_drill_data)
+        measured_full_depth = abs(measured_full_z)
+        try:
+            derived_c = derive_center_drill_c_from_full_z(
+                center_drill_data["pilot"],
+                full_target_dia,
+                center_drill_data["angle"],
+                measured_full_depth,
+            )
+        except ValueError as exc:
+            warning_text = str(exc)
+        else:
+            if derived_c < 0:
+                warning_text = "Derived C from measured full Z is negative. Falling back to chart C default."
+            else:
+                default_c = derived_c
+                source_label = "Shop/Mastercam measured full Z"
+                status_text = "Using shop/Mastercam measured full Z depth to derive C."
+
+    return {
+        "chart_c": chart_c,
+        "default_c": default_c,
+        "derived_c": derived_c,
+        "source_label": source_label,
+        "status_text": status_text,
+        "warning_text": warning_text,
+    }
 
 
 def build_woodruff_primary_display_rows(rows: list[dict]) -> list[dict]:
@@ -528,615 +545,421 @@ Use this for quick edge-break math and for programming chamfer tool depth. Handy
     )
 
     with st.container(border=True):
-        st.markdown("### Drilled Hole Chamfer / Final Z")
+        st.markdown("### Center Drill / Finished Center Z")
         st.write(
-            "This is for chamfering an existing drilled/pilot hole. It adds the extra axial depth required "
-            "to grow the existing hole diameter to the finished chamfer diameter."
+            "Use this when center drilling the end of a shaft/part and you want a specific finished center diameter on the face."
         )
 
-        tool_mode = st.selectbox(
-            "Tool Mode",
-            [
-                "Custom Chamfer / Spot Drill",
-                "Center Drill Preset",
-                "Spot Drill Preset",
-            ],
-            key="hole_chamfer_tool_mode"
+        center_drill_preset = st.selectbox(
+            "Center Drill Size",
+            get_center_drill_options(include_custom=False),
+            format_func=center_drill_select_label,
+            key="center_drill_finished_center_preset"
         )
+        center_drill_data = CENTER_DRILL_PRESETS[center_drill_preset]
+        center_drill_defaults = get_center_drill_default_c_details(center_drill_data)
+        center_drill_pilot_dia = center_drill_data["pilot"]
+        center_drill_body_dia = get_center_drill_full_target_diameter(center_drill_data)
+        included_angle_deg = center_drill_data["angle"]
+        center_drill_selected_size_key = "center_drill_finished_center_selected_size"
+        center_drill_c_widget_key = "center_drill_finished_center_c_input"
+        derived_default_c = float(center_drill_defaults["default_c"])
 
-        included_angle_deg = 90.0
-        center_drill_pilot_dia = None
-        center_drill_body_dia = None
-        center_drill_pilot_length = None
-        tool_pilot_length_c = None
-        mastercam_check_z = 0.0
-        spot_drill_tip_dia = 0.0
-        spot_drill_tool_dia = 0.0
+        if st.session_state.get(center_drill_selected_size_key) != center_drill_preset:
+            st.session_state[center_drill_selected_size_key] = center_drill_preset
+            st.session_state[center_drill_c_widget_key] = derived_default_c
+        elif center_drill_c_widget_key not in st.session_state:
+            st.session_state[center_drill_c_widget_key] = derived_default_c
 
-        if tool_mode == "Custom Chamfer / Spot Drill":
-            included_angle_deg = st.number_input(
-                "Chamfer Included Angle (deg)",
-                min_value=0.1,
-                max_value=179.9,
-                value=90.0,
-                step=1.0,
-                format="%.1f",
-                key="hole_chamfer_custom_included_angle"
-            )
-        elif tool_mode == "Center Drill Preset":
-            center_drill_preset = st.selectbox(
-                "Center Drill Size",
-                get_center_drill_options(include_custom=False),
-                format_func=center_drill_select_label,
-                key="hole_chamfer_center_drill_preset"
-            )
-            center_drill_data = CENTER_DRILL_PRESETS[center_drill_preset]
-            included_angle_deg = center_drill_data["angle"]
-            center_drill_pilot_dia = center_drill_data["pilot"]
-            center_drill_body_dia = center_drill_data.get("bell", center_drill_data["body"])
-            center_drill_pilot_length = center_drill_data["pilot_length"]
+        tool_info_col1, tool_info_col2, tool_info_col3, tool_info_col4 = st.columns(4)
+        tool_info_col1.metric("Style", center_drill_data["style"])
+        tool_info_col2.metric("Pilot Diameter", format_shop_decimal(center_drill_pilot_dia))
+        tool_info_col3.metric("Included Angle", f"{included_angle_deg:.1f} deg")
+        tool_info_col4.metric("Body / Bell Diameter", format_shop_decimal(center_drill_body_dia))
 
-            if st.session_state.get("hole_chamfer_center_drill_preset_state") != center_drill_preset:
-                st.session_state["hole_chamfer_center_drill_c_value"] = center_drill_pilot_length
-                st.session_state["hole_chamfer_center_drill_mastercam_check_z"] = -0.6550 if center_drill_preset == "8" else 0.0000
-                st.session_state["hole_chamfer_center_drill_preset_state"] = center_drill_preset
-
-            preset_col1, preset_col2, preset_col3, preset_col4 = st.columns(4)
-            preset_col1.metric("Style", center_drill_data["style"])
-            preset_col2.metric("Included Angle", f"{included_angle_deg:.1f} deg")
-            preset_col3.metric("Pilot Diameter", f"{center_drill_pilot_dia:.4f}")
-            preset_col4.metric("Body / Bell Diameter", f"{center_drill_body_dia:.4f}")
-
-            tool_col1, tool_col2 = st.columns(2)
-            with tool_col1:
-                tool_pilot_length_c = st.number_input(
-                    "Tool Pilot Length / Full Depth Offset (C)",
-                    min_value=0.0000,
-                    value=st.session_state["hole_chamfer_center_drill_c_value"],
-                    step=0.0010,
-                    format="%.4f",
-                    key="hole_chamfer_center_drill_c_value"
-                )
-            with tool_col2:
-                mastercam_check_z = st.number_input(
-                    "Mastercam Check Z",
-                    value=st.session_state["hole_chamfer_center_drill_mastercam_check_z"],
-                    step=0.0010,
-                    format="%.4f",
-                    key="hole_chamfer_center_drill_mastercam_check_z"
-                )
-
-            st.caption(f"Preset chart C default: {center_drill_pilot_length:.4f}")
-            st.caption("Existing hole diameter is the hole already in the part. Center drill pilot diameter is tool geometry.")
-            st.caption(
-                "Final Program Z uses Tool Pilot Length / Full Depth Offset (C). Adjust C if your Mastercam tool model "
-                "or actual center drill does not match the preset."
-            )
-        else:
-            spot_drill_angle_source = st.selectbox(
-                "Spot Drill Angle Preset",
-                list(SPOT_DRILL_PRESET_ANGLES.keys()) + ["Custom Spot Drill Angle"],
-                key="hole_chamfer_spot_drill_angle_source"
-            )
-
-            tool_col1, tool_col2, tool_col3 = st.columns(3)
-            with tool_col1:
-                if spot_drill_angle_source == "Custom Spot Drill Angle":
-                    included_angle_deg = st.number_input(
-                        "Chamfer Included Angle (deg)",
-                        min_value=0.1,
-                        max_value=179.9,
-                        value=90.0,
-                        step=1.0,
-                        format="%.1f",
-                        key="hole_chamfer_spot_drill_custom_angle"
-                    )
-                else:
-                    included_angle_deg = SPOT_DRILL_PRESET_ANGLES[spot_drill_angle_source]
-                    st.metric("Included Angle", f"{included_angle_deg:.1f} deg")
-            with tool_col2:
-                spot_drill_tip_dia = st.number_input(
-                    "Spot Drill Tool Tip Diameter",
-                    min_value=0.0000,
-                    value=0.0000,
-                    step=0.0010,
-                    format="%.4f",
-                    key="hole_chamfer_spot_drill_tip_dia"
-                )
-            with tool_col3:
-                spot_drill_tool_dia = st.number_input(
-                    "Spot Drill Tool Diameter (Optional)",
-                    min_value=0.0000,
-                    value=0.0000,
-                    step=0.0010,
-                    format="%.4f",
-                    key="hole_chamfer_spot_drill_tool_dia"
-                )
-
-            st.caption(
-                "Spot Drill Tool Tip Diameter is used for auto base depth. Spot Drill Tool Diameter is only for a size warning "
-                "against the finished chamfer diameter."
-            )
-
-        base_depth_mode_options = ["Manual"] if tool_mode == "Custom Chamfer / Spot Drill" else ["Auto from Selected Tool", "Manual"]
-        default_base_depth_mode = "Manual" if tool_mode == "Custom Chamfer / Spot Drill" else "Auto from Selected Tool"
-        if st.session_state.get("hole_chamfer_base_depth_mode_tool_mode") != tool_mode:
-            st.session_state["hole_chamfer_base_depth_mode"] = default_base_depth_mode
-            st.session_state["hole_chamfer_base_depth_mode_tool_mode"] = tool_mode
-
-        if st.session_state.get("hole_chamfer_base_depth_mode") not in base_depth_mode_options:
-            st.session_state["hole_chamfer_base_depth_mode"] = default_base_depth_mode
-
-        input_col1, input_col2, input_col3, input_col4 = st.columns(4)
+        input_col1, input_col2, input_col3 = st.columns(3)
         with input_col1:
-            existing_hole_dia = st.number_input(
-                "Existing Drilled / Pilot Hole Diameter",
-                min_value=0.0001,
-                value=0.4612,
-                step=0.0010,
-                format="%.4f",
-                key="hole_chamfer_existing_dia"
-            )
-        with input_col2:
-            finished_chamfer_dia = st.number_input(
-                "Finished Chamfer Major Diameter",
+            desired_finished_center_diameter = st.number_input(
+                "Desired Finished Center Diameter",
                 min_value=0.0001,
                 value=0.6250,
                 step=0.0010,
                 format="%.4f",
-                key="hole_chamfer_finished_dia"
+                key="center_drill_finished_center_diameter"
             )
-        with input_col3:
             backoff_clearance_dia = st.number_input(
                 "Backoff / Clearance on Diameter",
                 min_value=0.0000,
                 value=0.0000,
                 step=0.0005,
                 format="%.4f",
-                key="hole_chamfer_backoff_clearance"
+                key="center_drill_finished_center_backoff"
             )
-        with input_col4:
-            if len(base_depth_mode_options) > 1:
-                base_depth_mode = st.selectbox(
-                    "Base Depth Mode",
-                    base_depth_mode_options,
-                    key="hole_chamfer_base_depth_mode"
-                )
-            else:
-                base_depth_mode = "Manual"
-                st.caption("Base Depth Mode: Manual")
-
-        if base_depth_mode == "Manual":
-            base_hole_depth = st.number_input(
-                "Base Pilot / Hole Depth from Face",
-                min_value=0.0000,
-                value=0.5831,
-                step=0.0010,
-                format="%.4f",
-                key="hole_chamfer_base_depth"
-            )
-        else:
-            base_hole_depth = None
-
-        st.caption("Backoff / Clearance subtracts from the finished chamfer diameter to help avoid cutting the chamfer oversized.")
-
-        target_chamfer_dia = finished_chamfer_dia - backoff_clearance_dia
-
-        invalid_hole_chamfer_inputs = False
-        auto_base_warning = None
-        diameter_at_final_z = None
-        diameter_at_mastercam_z = None
-        cleanup_depth = None
-
-        if included_angle_deg <= 0 or included_angle_deg >= 180:
-            st.error("Included angle must be greater than 0 and less than 180 degrees.")
-            invalid_hole_chamfer_inputs = True
-
-        if base_depth_mode == "Manual" and base_hole_depth < 0:
-            st.error("Base pilot / hole depth must be zero or positive.")
-            invalid_hole_chamfer_inputs = True
-
-        if backoff_clearance_dia < 0:
-            st.error("Backoff / Clearance on Diameter must be zero or positive.")
-            invalid_hole_chamfer_inputs = True
-
-        minimum_target_dia = existing_hole_dia
-        if tool_mode == "Center Drill Preset":
-            minimum_target_dia = max(minimum_target_dia, center_drill_pilot_dia)
-        elif tool_mode == "Spot Drill Preset":
-            minimum_target_dia = max(minimum_target_dia, spot_drill_tip_dia)
-
-        if target_chamfer_dia <= minimum_target_dia:
-            st.error("Backoff is too large. Target chamfer diameter must be larger than the existing hole/tool pilot diameter.")
-            invalid_hole_chamfer_inputs = True
-
-        if tool_mode == "Center Drill Preset" and tool_pilot_length_c is not None and tool_pilot_length_c < 0:
-            st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
-            invalid_hole_chamfer_inputs = True
-
-        if not invalid_hole_chamfer_inputs:
-            half_angle = math.radians(included_angle_deg / 2)
-            cleanup_depth = calc_hole_chamfer_cleanup_depth(
-                target_chamfer_dia,
-                existing_hole_dia,
-                included_angle_deg,
-            )
-
-            if tool_mode == "Center Drill Preset":
-                if base_depth_mode == "Auto from Selected Tool":
-                    if existing_hole_dia <= center_drill_pilot_dia:
-                        auto_base_warning = (
-                            "Existing hole diameter is smaller than or equal to the center drill pilot diameter. "
-                            "Auto base depth may not be valid; verify tool fit or use Manual mode."
-                        )
-
-                    base_hole_depth = tool_pilot_length_c + (
-                        (existing_hole_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
-                    )
-
-                full_tool_depth = tool_pilot_length_c + (
-                    (target_chamfer_dia - center_drill_pilot_dia) / (2 * math.tan(half_angle))
-                )
-                final_program_z = -full_tool_depth
-                diameter_at_final_z = center_drill_pilot_dia + (
-                    2 * (abs(final_program_z) - tool_pilot_length_c) * math.tan(half_angle)
-                )
-
-                if mastercam_check_z != 0:
-                    if abs(mastercam_check_z) <= tool_pilot_length_c:
-                        st.warning("Mastercam Check Z is shallower than Tool Pilot Length / Full Depth Offset (C). The tool has not reached the chamfer cone yet.")
-                    else:
-                        diameter_at_mastercam_z = center_drill_pilot_dia + (
-                            2 * (abs(mastercam_check_z) - tool_pilot_length_c) * math.tan(half_angle)
-                        )
-            elif tool_mode == "Spot Drill Preset":
-                if base_depth_mode == "Auto from Selected Tool":
-                    if existing_hole_dia <= spot_drill_tip_dia:
-                        auto_base_warning = (
-                            "Existing hole diameter is smaller than or equal to the spot drill tip diameter. "
-                            "Auto base depth may not be valid; verify tool fit or use Manual mode."
-                        )
-
-                    base_hole_depth = (existing_hole_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle))
-                    final_program_z = -((target_chamfer_dia - spot_drill_tip_dia) / (2 * math.tan(half_angle)))
-                else:
-                    final_program_z = -(base_hole_depth + cleanup_depth)
-
-                diameter_at_final_z = spot_drill_tip_dia + (
-                    2 * abs(final_program_z) * math.tan(half_angle)
-                )
-            else:
-                final_program_z = -(base_hole_depth + cleanup_depth)
-                diameter_at_final_z = target_chamfer_dia
-
-        if not invalid_hole_chamfer_inputs:
-            if auto_base_warning:
-                st.warning(auto_base_warning)
-
-            result_labels = ["Target Chamfer Diameter", "Final Program Z", "Diameter at Final Program Z"]
-            result_values = [
-                f"{target_chamfer_dia:.4f}",
-                f"{final_program_z:.4f}",
-                f"{diameter_at_final_z:.4f}",
-            ]
-
-            if diameter_at_mastercam_z is not None:
-                result_labels.append("Diameter at Mastercam Check Z")
-                result_values.append(f"{diameter_at_mastercam_z:.4f}")
-
-            result_cols = st.columns(len(result_labels))
-            for col, label, value in zip(result_cols, result_labels, result_values):
-                col.metric(label, value)
-
-            detail_col1, detail_col2 = st.columns(2)
-            if cleanup_depth is not None:
-                detail_col1.metric("Chamfer Cleanup Axial Depth", f"{cleanup_depth:.4f}")
-
-            if base_depth_mode == "Auto from Selected Tool" and base_hole_depth is not None:
-                detail_col2.metric("Auto Base Pilot / Hole Depth from Face", f"{base_hole_depth:.4f}")
-            elif base_depth_mode == "Manual":
-                detail_col2.metric("Base Pilot / Hole Depth", f"{base_hole_depth:.4f}")
-
-            st.caption(
-                "Auto base depth is calculated from the selected tool geometry at the existing hole diameter. "
-                "Manual mode lets you override this when your setup or Mastercam reference is different."
-            )
-            st.caption(
-                "Final Program Z is calculated from the target chamfer diameter after backoff/clearance is subtracted."
-            )
-
-            if center_drill_body_dia is not None and finished_chamfer_dia > center_drill_body_dia:
-                st.warning("Finished chamfer diameter exceeds selected center drill body/bell diameter.")
-
-            if center_drill_body_dia is not None and target_chamfer_dia > center_drill_body_dia:
-                st.warning("Target chamfer diameter exceeds selected center drill body/bell diameter.")
-
-            if center_drill_pilot_dia is not None and center_drill_pilot_dia > existing_hole_dia:
-                st.warning("Center drill pilot diameter is larger than the existing hole. Verify tool fit before programming.")
-
-            if spot_drill_tool_dia and finished_chamfer_dia > spot_drill_tool_dia:
-                st.warning("Finished chamfer diameter exceeds selected spot drill tool diameter.")
-
-            if spot_drill_tool_dia and target_chamfer_dia > spot_drill_tool_dia:
-                st.warning("Target chamfer diameter exceeds selected spot drill tool diameter.")
-
-    with st.container(border=True):
-        st.markdown("### Centered Slot / Keyway - Both Edges")
-        st.write(
-            "This mode is for running the tool down the center of a slot/keyway so both top edges are chamfered at the same time. "
-            "Use Keyway / Shaft Edge Mode for chamfering only one edge from a wall."
-        )
-        st.caption(
-            "For centered slot/keyway chamfers, the tool must first reach both slot edges before it starts creating the requested edge drop."
-        )
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            centered_slot_width = st.number_input(
-                "Slot / Keyway Width",
-                min_value=0.0001,
-                value=0.1885,
-                step=0.0010,
-                format="%.4f",
-                key="centered_slot_width"
-            )
-            centered_slot_chamfer_size = st.number_input(
-                "Desired Chamfer Size / Vertical Edge Drop",
-                min_value=0.0001,
-                value=0.0375,
-                step=0.0010,
-                format="%.4f",
-                key="centered_slot_chamfer_size"
-            )
-            st.caption(
-                "Enter the vertical chamfer drop down the slot wall. Do not use the print's overall chamfer width unless it "
-                "represents the same vertical edge drop."
-            )
-            centered_slot_top_reference_z = st.number_input(
+        with input_col2:
+            top_reference_z = st.number_input(
                 "Top Reference Z",
                 value=0.0000,
                 step=0.0010,
                 format="%.4f",
-                key="centered_slot_top_reference_z"
+                key="center_drill_finished_center_top_z"
             )
-        with col2:
-            centered_slot_tool_included_angle = st.number_input(
-                "Tool Included Angle (deg)",
-                min_value=0.1,
-                max_value=179.9,
-                value=90.0,
-                step=1.0,
-                format="%.1f",
-                key="centered_slot_tool_angle"
-            )
-            centered_slot_tool_tip_diameter = st.number_input(
-                "Tool Tip Diameter",
+            tool_pilot_length_c = st.number_input(
+                "Tool Pilot Length / Full Depth Offset (C)",
                 min_value=0.0000,
-                value=0.0100,
                 step=0.0010,
                 format="%.4f",
-                key="centered_slot_tool_tip_dia"
+                key=center_drill_c_widget_key
             )
-            centered_slot_cleanup_allowance = st.number_input(
-                "Cleanup / Extra Depth",
-                value=0.0000,
-                step=0.0005,
-                format="%.4f",
-                key="centered_slot_cleanup_allowance"
+        with input_col3:
+            st.caption(f"Preset chart C default: {format_shop_decimal(center_drill_defaults['chart_c'])}")
+            if center_drill_defaults["derived_c"] is not None and center_drill_defaults["derived_c"] >= 0:
+                st.caption(f"Derived C from measured full Z: {format_shop_decimal(center_drill_defaults['derived_c'])}")
+            if center_drill_data.get("calibration_note"):
+                st.caption(center_drill_data["calibration_note"])
+
+        target_center_dia = desired_finished_center_diameter - backoff_clearance_dia
+        center_drill_invalid = False
+        center_drill_warnings: list[str] = []
+
+        if backoff_clearance_dia < 0:
+            st.error("Backoff / Clearance on Diameter must be zero or positive.")
+            center_drill_invalid = True
+
+        if tool_pilot_length_c < 0:
+            st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
+            center_drill_invalid = True
+
+        if target_center_dia <= center_drill_pilot_dia:
+            st.error("Target center diameter must be larger than the center drill pilot diameter.")
+            center_drill_invalid = True
+
+        if target_center_dia > center_drill_body_dia:
+            center_drill_warnings.append("Target center diameter exceeds selected center drill body/bell diameter.")
+
+        if center_drill_data.get("full_z_verified") and center_drill_data.get("mastercam_full_z_depth") is not None:
+            st.info("Using shop/Mastercam-derived C default.")
+        else:
+            st.warning("Using chart C default. Verify against Mastercam or edit C if depth does not match.")
+
+        if center_drill_defaults["warning_text"]:
+            center_drill_warnings.append(center_drill_defaults["warning_text"])
+
+        if not center_drill_invalid:
+            program_depth = center_drill_total_depth_for_target(
+                center_drill_pilot_dia,
+                target_center_dia,
+                included_angle_deg,
+                tool_pilot_length_c,
             )
-        with col3:
-            centered_slot_tool_cutting_length = st.number_input(
-                "Tool Cutting / Taper Length",
-                min_value=0.0000,
-                value=0.0575,
-                step=0.0005,
-                format="%.4f",
-                key="centered_slot_tool_cutting_length"
-            )
-            centered_slot_tool_shank_diameter = st.number_input(
-                "Tool Shank / Max Diameter",
-                min_value=0.0000,
-                value=0.2500,
-                step=0.0010,
-                format="%.4f",
-                key="centered_slot_tool_shank_dia"
-            )
-
-        centered_slot_half_width = centered_slot_width / 2
-        centered_slot_tip_radius = centered_slot_tool_tip_diameter / 2
-        centered_slot_invalid = False
-
-        if centered_slot_width <= 0:
-            st.error("Slot width must be greater than 0.")
-            centered_slot_invalid = True
-
-        if centered_slot_chamfer_size <= 0:
-            st.error("Desired chamfer size must be greater than 0.")
-            centered_slot_invalid = True
-
-        if centered_slot_tool_included_angle <= 0 or centered_slot_tool_included_angle >= 180:
-            st.error("Tool included angle must be greater than 0 and less than 180.")
-            centered_slot_invalid = True
-
-        if centered_slot_tool_tip_diameter < 0:
-            st.error("Tool tip diameter must be zero or positive.")
-            centered_slot_invalid = True
-
-        if centered_slot_tool_cutting_length < 0:
-            st.error("Tool cutting / taper length must be zero or positive.")
-            centered_slot_invalid = True
-
-        if centered_slot_tool_shank_diameter < 0:
-            st.error("Tool shank / max diameter must be zero or positive.")
-            centered_slot_invalid = True
-
-        if centered_slot_tip_radius >= centered_slot_half_width:
-            st.error("Tool tip diameter is too large for this slot width.")
-            centered_slot_invalid = True
-
-        if not centered_slot_invalid:
-            centered_slot_half_angle = math.radians(centered_slot_tool_included_angle / 2)
-            centered_slot_reach_to_edge_depth = (
-                (centered_slot_half_width - centered_slot_tip_radius) / math.tan(centered_slot_half_angle)
-            )
-            centered_slot_depth_from_top = (
-                centered_slot_reach_to_edge_depth
-                + centered_slot_chamfer_size
-                + centered_slot_cleanup_allowance
-            )
-            centered_slot_final_program_z = centered_slot_top_reference_z - centered_slot_depth_from_top
-            centered_slot_max_clean_chamfer_before_shoulder = (
-                centered_slot_tool_cutting_length - centered_slot_reach_to_edge_depth
-            )
-            centered_slot_minimum_cutting_length_required = centered_slot_depth_from_top
-            centered_slot_shoulder_overtravel = (
-                centered_slot_depth_from_top - centered_slot_tool_cutting_length
+            program_z = top_reference_z - program_depth
+            diameter_at_program_z = center_drill_diameter_at_depth(
+                center_drill_pilot_dia,
+                included_angle_deg,
+                tool_pilot_length_c,
+                abs(program_z - top_reference_z),
             )
 
-            primary_col = st.columns(1)[0]
-            primary_col.metric("Final Program Z", format_shop_decimal(centered_slot_final_program_z))
+            result_col1, result_col2, result_col3 = st.columns(3)
+            result_col1.metric("Target Center Diameter", format_shop_decimal(target_center_dia))
+            result_col2.metric("Program Z", format_shop_decimal(program_z))
+            result_col3.metric("Diameter at Program Z", format_shop_decimal(diameter_at_program_z))
 
-            r1, r2, r3, r4 = st.columns(4)
-            r1.metric("Half Slot Width", format_shop_decimal(centered_slot_half_width))
-            r2.metric("Tip Radius", format_shop_decimal(centered_slot_tip_radius))
-            r3.metric("Reach-to-Edge Depth", format_shop_decimal(centered_slot_reach_to_edge_depth))
-            r4.metric("Calculated Depth from Top", format_shop_decimal(centered_slot_depth_from_top))
+            with st.expander("Calculation Details", expanded=False):
+                st.write(f"Tool C Used: {format_shop_decimal(tool_pilot_length_c)}")
+                st.write(f"C Source: {center_drill_defaults['source_label']}")
+                st.write(f"Pilot Diameter: {format_shop_decimal(center_drill_pilot_dia)}")
+                st.write(f"Included Angle: {included_angle_deg:.1f} deg")
+                st.write(f"Body / Bell Diameter: {format_shop_decimal(center_drill_body_dia)}")
 
-            r5, r6, r7 = st.columns(3)
-            r5.metric(
-                "Max Clean Chamfer Before Shoulder",
-                format_shop_decimal(centered_slot_max_clean_chamfer_before_shoulder)
-            )
-            r6.metric(
-                "Minimum Cutting Length Required",
-                format_shop_decimal(centered_slot_minimum_cutting_length_required)
-            )
-            r7.metric("Shoulder Overtravel", format_shop_decimal(centered_slot_shoulder_overtravel))
-
-            if centered_slot_depth_from_top > centered_slot_tool_cutting_length:
-                st.warning("Calculated depth exceeds the tool cutting/taper length. The shank/body may enter the cut.")
-
-            if centered_slot_max_clean_chamfer_before_shoulder < centered_slot_chamfer_size:
-                st.warning(
-                    "Requested chamfer is larger than this tool can cut cleanly before the shoulder/body enters the slot."
-                )
-
-            if (
-                centered_slot_tool_shank_diameter > centered_slot_width
-                and centered_slot_depth_from_top > centered_slot_tool_cutting_length
-            ):
-                st.warning(
-                    "Tool body/shank is larger than the slot width and the calculated depth goes past the taper length. "
-                    "Verify clearance in Mastercam before running."
-                )
-
-            st.caption(
-                "Example: slot width 0.1885, tool tip diameter 0.1350, 90 deg included tool, vertical edge drop 0.0234375 "
-                "gives reach-to-edge depth 0.0268, calculated depth from top 0.0502, and final program Z about -0.0502."
-            )
+        for warning_text in center_drill_warnings:
+            st.warning(warning_text)
 
     with st.container(border=True):
-        st.markdown("### Keyway / Shaft Edge Mode")
-        st.write("Use this when chamfering the straight edge of a keyway or slot on a round shaft.")
+        st.markdown("### Keyway / Slot Chamfer Final Z")
+        st.write(
+            "Use this for either centered slot/keyway chamfering on both edges or a single edge/wall chamfer along a shaft, slot, or keyway."
+        )
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            shaft_diameter = st.number_input(
-                "Shaft Diameter",
-                min_value=0.0001,
-                value=1.0000,
-                step=0.0100,
-                format="%.4f",
-                key="chamfer_keyway_shaft_dia"
-            )
-            keyway_width = st.number_input(
-                "Keyway Width",
-                min_value=0.0001,
-                value=0.2500,
-                step=0.0010,
-                format="%.4f",
-                key="chamfer_keyway_width"
-            )
-        with col2:
-            keyway_chamfer_size = st.number_input(
-                "Chamfer Size",
-                min_value=0.0001,
-                value=0.0050,
-                step=0.0010,
-                format="%.4f",
-                key="chamfer_keyway_size"
-            )
-            keyway_chamfer_angle = st.number_input(
-                "Chamfer Angle (deg)",
-                min_value=0.1,
-                max_value=89.9,
-                value=45.0,
-                step=1.0,
-                format="%.1f",
-                key="chamfer_keyway_angle"
-            )
-        with col3:
-            keyway_tool_included_angle = st.number_input(
-                "Tool Included Angle (deg)",
-                min_value=1.0,
-                max_value=179.9,
-                value=90.0,
-                step=1.0,
-                format="%.1f",
-                key="chamfer_keyway_tool_angle"
-            )
-            keyway_tool_tip_diameter = st.number_input(
-                "Tool Tip Diameter",
-                min_value=0.0000,
-                value=0.0100,
-                step=0.0010,
-                format="%.4f",
-                key="chamfer_keyway_tool_tip"
+        keyway_application_type = st.radio(
+            "Application Type",
+            ["Centered Slot / Keyway - Both Edges", "Single Edge / Wall Chamfer"],
+            horizontal=True,
+            key="keyway_chamfer_application_type"
+        )
+
+        if keyway_application_type == "Centered Slot / Keyway - Both Edges":
+            st.caption(
+                "Vertical Edge Drop is the chamfer amount down the slot wall. The tool must first reach both slot edges before cutting that drop."
             )
 
-        keyway_chamfer_tangent = safe_tangent(keyway_chamfer_angle)
-        keyway_tool_half_angle = keyway_tool_included_angle / 2
-        keyway_tool_half_tangent = safe_tangent(keyway_tool_half_angle)
-
-        if keyway_width >= shaft_diameter:
-            st.error("Keyway width must be smaller than shaft diameter.")
-        elif keyway_chamfer_tangent is None:
-            st.error("Chamfer angle must be greater than 0 and less than 90 degrees.")
-        elif keyway_tool_half_tangent is None:
-            st.error("Tool included angle must be greater than 0 and less than 180 degrees.")
-        else:
-            shaft_radius = shaft_diameter / 2
-            half_width = keyway_width / 2
-            edge_drop = shaft_radius - math.sqrt(max(0.0, shaft_radius**2 - half_width**2))
-            edge_depth = keyway_chamfer_size / keyway_chamfer_tangent
-            tip_offset = (keyway_tool_tip_diameter / 2) / keyway_tool_half_tangent
-            final_tool_depth_from_edge = edge_depth + tip_offset
-            final_programmed_depth = edge_drop + final_tool_depth_from_edge
-            tool_offset_from_wall = final_tool_depth_from_edge * keyway_tool_half_tangent
-            keyway_tool_angle_matches = abs(keyway_tool_half_angle - keyway_chamfer_angle) <= 0.1
-
-            r1, r2, r3 = st.columns(3)
-            r1.metric("Edge Drop from Shaft OD", f"{edge_drop:.4f}")
-            r2.metric("Edge Depth from Sharp Edge", f"{edge_depth:.4f}")
-            r3.metric("Tool Offset from Wall", f"{tool_offset_from_wall:.4f}")
-
-            r4, r5, r6 = st.columns(3)
-            r4.metric("Tip Offset from Sharp Point", f"{tip_offset:.4f}")
-            r5.metric("Final Tool Depth from Sharp Edge", f"{final_tool_depth_from_edge:.4f}")
-            r6.metric("Final Programmed Depth from Shaft OD Top", f"{final_programmed_depth:.4f}")
-
-            st.write(
-                f"Program tool centerline {tool_offset_from_wall:.4f} off wall and "
-                f"{final_programmed_depth:.4f} down from shaft OD top."
-            )
-
-            if keyway_tool_angle_matches:
-                st.info("This tool angle matches the requested chamfer geometry for a clean edge break.")
-            else:
-                st.warning(
-                    f"Tool side angle is {keyway_tool_half_angle:.1f} deg, but the requested chamfer angle is {keyway_chamfer_angle:.1f} deg. "
-                    "This tool will not make that chamfer cleanly."
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                centered_slot_width = st.number_input(
+                    "Slot / Keyway Width",
+                    min_value=0.0001,
+                    value=0.1885,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_width"
                 )
+                centered_slot_chamfer_size = st.number_input(
+                    "Desired Chamfer Size / Vertical Edge Drop",
+                    min_value=0.0001,
+                    value=0.0234375,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_chamfer_size"
+                )
+                centered_slot_top_reference_z = st.number_input(
+                    "Top Reference Z",
+                    value=0.0000,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_top_reference_z"
+                )
+            with col2:
+                centered_slot_tool_included_angle = st.number_input(
+                    "Tool Included Angle (deg)",
+                    min_value=0.1,
+                    max_value=179.9,
+                    value=90.0,
+                    step=1.0,
+                    format="%.1f",
+                    key="centered_slot_tool_angle"
+                )
+                centered_slot_tool_tip_diameter = st.number_input(
+                    "Tool Tip Diameter",
+                    min_value=0.0000,
+                    value=0.1350,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_tool_tip_dia"
+                )
+                centered_slot_cleanup_allowance = st.number_input(
+                    "Cleanup / Extra Depth",
+                    value=0.0000,
+                    step=0.0005,
+                    format="%.4f",
+                    key="centered_slot_cleanup_allowance"
+                )
+            with col3:
+                centered_slot_tool_body_diameter = st.number_input(
+                    "Tool Body / Max Diameter",
+                    min_value=0.0000,
+                    value=0.2500,
+                    step=0.0010,
+                    format="%.4f",
+                    key="centered_slot_tool_body_dia"
+                )
+
+            centered_slot_half_width = centered_slot_width / 2
+            centered_slot_tip_radius = centered_slot_tool_tip_diameter / 2
+            centered_slot_invalid = False
+
+            if centered_slot_width <= 0:
+                st.error("Slot width must be greater than 0.")
+                centered_slot_invalid = True
+
+            if centered_slot_chamfer_size <= 0:
+                st.error("Desired chamfer size must be greater than 0.")
+                centered_slot_invalid = True
+
+            if centered_slot_tool_included_angle <= 0 or centered_slot_tool_included_angle >= 180:
+                st.error("Tool included angle must be greater than 0 and less than 180.")
+                centered_slot_invalid = True
+
+            if centered_slot_tool_tip_diameter < 0:
+                st.error("Tool tip diameter must be zero or positive.")
+                centered_slot_invalid = True
+
+            if centered_slot_tool_body_diameter < 0:
+                st.error("Tool body/max diameter must be zero or positive.")
+                centered_slot_invalid = True
+
+            if centered_slot_tip_radius >= centered_slot_half_width:
+                st.error("Tool tip diameter is too large for this slot width.")
+                centered_slot_invalid = True
+
+            if centered_slot_tool_body_diameter <= centered_slot_tool_tip_diameter:
+                st.error("Tool body/max diameter must be larger than the tool tip diameter.")
+                centered_slot_invalid = True
+
+            if not centered_slot_invalid:
+                centered_slot_half_angle = math.radians(centered_slot_tool_included_angle / 2)
+                centered_slot_calculated_taper_length = (
+                    ((centered_slot_tool_body_diameter - centered_slot_tool_tip_diameter) / 2)
+                    / math.tan(centered_slot_half_angle)
+                )
+                centered_slot_reach_to_edge_depth = (
+                    (centered_slot_half_width - centered_slot_tip_radius) / math.tan(centered_slot_half_angle)
+                )
+                centered_slot_depth_from_top = (
+                    centered_slot_reach_to_edge_depth
+                    + centered_slot_chamfer_size
+                    + centered_slot_cleanup_allowance
+                )
+                centered_slot_final_program_z = centered_slot_top_reference_z - centered_slot_depth_from_top
+                centered_slot_max_clean_chamfer_before_shoulder = (
+                    centered_slot_calculated_taper_length - centered_slot_reach_to_edge_depth
+                )
+                centered_slot_minimum_cutting_length_required = centered_slot_depth_from_top
+                centered_slot_shoulder_overtravel = (
+                    centered_slot_depth_from_top - centered_slot_calculated_taper_length
+                )
+
+                primary_col1, primary_col2, primary_col3 = st.columns(3)
+                primary_col1.metric("Final Program Z", format_shop_decimal(centered_slot_final_program_z))
+                primary_col2.metric("Tool Centerline", "Slot Center")
+                primary_col3.metric("Target Vertical Edge Drop", format_shop_decimal(centered_slot_chamfer_size))
+
+                detail_col1, detail_col2, detail_col3, detail_col4 = st.columns(4)
+                detail_col1.metric("Half Slot Width", format_shop_decimal(centered_slot_half_width))
+                detail_col2.metric("Tip Radius", format_shop_decimal(centered_slot_tip_radius))
+                detail_col3.metric("Reach-to-Edge Depth", format_shop_decimal(centered_slot_reach_to_edge_depth))
+                detail_col4.metric("Calculated Depth From Top", format_shop_decimal(centered_slot_depth_from_top))
+
+                if centered_slot_depth_from_top > centered_slot_calculated_taper_length:
+                    st.warning("Calculated depth exceeds the tool taper length. The body/shoulder may enter the cut.")
+
+                if centered_slot_max_clean_chamfer_before_shoulder < centered_slot_chamfer_size:
+                    st.warning(
+                        "Requested chamfer is larger than this tool can cut cleanly before the shoulder/body enters the slot."
+                    )
+
+                if (
+                    centered_slot_tool_body_diameter > centered_slot_width
+                    and centered_slot_depth_from_top > centered_slot_calculated_taper_length
+                ):
+                    st.warning(
+                        "Tool body/max diameter is larger than the slot width and calculated depth goes past taper length. Verify clearance before running."
+                    )
+
+                with st.expander("Calculation Details", expanded=False):
+                    st.write(
+                        f"Calculated Taper Length: {format_shop_decimal(centered_slot_calculated_taper_length)}"
+                    )
+                    st.write(
+                        f"Max Clean Chamfer Before Shoulder: {format_shop_decimal(centered_slot_max_clean_chamfer_before_shoulder)}"
+                    )
+                    st.write(
+                        f"Minimum Cutting Length Required: {format_shop_decimal(centered_slot_minimum_cutting_length_required)}"
+                    )
+                    st.write(f"Shoulder Overtravel: {format_shop_decimal(centered_slot_shoulder_overtravel)}")
+
+        else:
+            st.caption("Use this when chamfering one edge/wall of a keyway, slot, or shaft edge.")
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                shaft_diameter = st.number_input(
+                    "Shaft Diameter",
+                    min_value=0.0001,
+                    value=1.0000,
+                    step=0.0100,
+                    format="%.4f",
+                    key="chamfer_keyway_shaft_dia"
+                )
+                keyway_width = st.number_input(
+                    "Keyway Width",
+                    min_value=0.0001,
+                    value=0.2500,
+                    step=0.0010,
+                    format="%.4f",
+                    key="chamfer_keyway_width"
+                )
+            with col2:
+                keyway_chamfer_size = st.number_input(
+                    "Desired Chamfer Size / Edge Drop",
+                    min_value=0.0001,
+                    value=0.0050,
+                    step=0.0010,
+                    format="%.4f",
+                    key="chamfer_keyway_size"
+                )
+                keyway_chamfer_angle = st.number_input(
+                    "Chamfer Angle (deg)",
+                    min_value=0.1,
+                    max_value=89.9,
+                    value=45.0,
+                    step=1.0,
+                    format="%.1f",
+                    key="chamfer_keyway_angle"
+                )
+            with col3:
+                keyway_tool_included_angle = st.number_input(
+                    "Tool Included Angle (deg)",
+                    min_value=1.0,
+                    max_value=179.9,
+                    value=90.0,
+                    step=1.0,
+                    format="%.1f",
+                    key="chamfer_keyway_tool_angle"
+                )
+                keyway_tool_tip_diameter = st.number_input(
+                    "Tool Tip Diameter",
+                    min_value=0.0000,
+                    value=0.0100,
+                    step=0.0010,
+                    format="%.4f",
+                    key="chamfer_keyway_tool_tip"
+                )
+                keyway_tool_body_diameter = st.number_input(
+                    "Tool Body / Max Diameter",
+                    min_value=0.0000,
+                    value=0.2500,
+                    step=0.0010,
+                    format="%.4f",
+                    key="chamfer_keyway_tool_body_dia"
+                )
+
+            keyway_chamfer_tangent = safe_tangent(keyway_chamfer_angle)
+            keyway_tool_half_angle = keyway_tool_included_angle / 2
+            keyway_tool_half_tangent = safe_tangent(keyway_tool_half_angle)
+
+            if keyway_width >= shaft_diameter:
+                st.error("Keyway width must be smaller than shaft diameter.")
+            elif keyway_chamfer_tangent is None:
+                st.error("Chamfer angle must be greater than 0 and less than 90 degrees.")
+            elif keyway_tool_half_tangent is None:
+                st.error("Tool included angle must be greater than 0 and less than 180 degrees.")
+            elif keyway_tool_tip_diameter < 0:
+                st.error("Tool tip diameter must be zero or positive.")
+            elif keyway_tool_body_diameter <= keyway_tool_tip_diameter:
+                st.error("Tool body/max diameter must be larger than the tool tip diameter.")
+            else:
+                shaft_radius = shaft_diameter / 2
+                half_width = keyway_width / 2
+                edge_drop = shaft_radius - math.sqrt(max(0.0, shaft_radius**2 - half_width**2))
+                edge_depth = keyway_chamfer_size / keyway_chamfer_tangent
+                tip_offset = (keyway_tool_tip_diameter / 2) / keyway_tool_half_tangent
+                keyway_calculated_taper_length = (
+                    ((keyway_tool_body_diameter - keyway_tool_tip_diameter) / 2)
+                    / math.tan(math.radians(keyway_tool_included_angle / 2))
+                )
+                final_tool_depth_from_edge = edge_depth + tip_offset
+                final_programmed_depth = edge_drop + final_tool_depth_from_edge
+                tool_offset_from_wall = final_tool_depth_from_edge * keyway_tool_half_tangent
+                keyway_tool_angle_matches = abs(keyway_tool_half_angle - keyway_chamfer_angle) <= 0.1
+
+                result_col1, result_col2, result_col3 = st.columns(3)
+                result_col1.metric("Tool Offset From Wall", format_shop_decimal(tool_offset_from_wall))
+                result_col2.metric("Final Program Depth / Z", format_shop_decimal(final_programmed_depth))
+                result_col3.metric("Edge Drop From Shaft OD", format_shop_decimal(edge_drop))
+
+                with st.expander("Calculation Details", expanded=False):
+                    st.write(f"Tip Offset: {format_shop_decimal(tip_offset)}")
+                    st.write(f"Calculated Taper Length: {format_shop_decimal(keyway_calculated_taper_length)}")
+                    st.write(f"Tool Side Angle Check: {keyway_tool_half_angle:.1f} deg vs chamfer {keyway_chamfer_angle:.1f} deg")
+                    st.write(f"Edge Depth from Sharp Edge: {format_shop_decimal(edge_depth)}")
+                    st.write(f"Final Tool Depth from Sharp Edge: {format_shop_decimal(final_tool_depth_from_edge)}")
+
+                if keyway_tool_angle_matches:
+                    st.info("This tool angle matches the requested chamfer geometry for a clean edge break.")
+                else:
+                    st.warning(
+                        f"Tool side angle is {keyway_tool_half_angle:.1f} deg, but the requested chamfer angle is {keyway_chamfer_angle:.1f} deg. "
+                        "This tool will not make that chamfer cleanly."
+                    )
 
 with tab_breakthrough:
     st.subheader("Drill Breakthrough Calculator")
