@@ -5,3 +5,10 @@ prompts/done/*
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+pytest-cache-files-*/
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
