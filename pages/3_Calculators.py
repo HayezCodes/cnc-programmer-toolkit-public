@@ -3,11 +3,14 @@ from decimal import Decimal, ROUND_HALF_UP
 import streamlit as st
 from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label, get_center_drill_options
 from data.woodruff_keys import (
-    WOODRUFF_KEY_NUMBERS,
+    WOODRUFF_ANSI_KEY_NOS,
+    WOODRUFF_KEY_MAPPING_SOURCE,
+    WOODRUFF_KEY_NOS,
     WOODRUFF_KEY_SOURCE,
     WOODRUFF_NOMINAL_SIZES,
     WOODRUFF_TOLERANCES,
-    get_woodruff_key_by_number,
+    get_woodruff_key_by_ansi_key_no,
+    get_woodruff_key_by_key_no,
     get_woodruff_keys_by_nominal_size,
 )
 from utils.holemaking import (
@@ -100,11 +103,12 @@ def get_center_drill_default_c_details(center_drill_data: dict) -> dict:
 def build_woodruff_primary_display_rows(rows: list[dict]) -> list[dict]:
     return [
         {
-            "Key No.": row["key_number"],
-            "Nominal Size Key": row["nominal_size"],
-            "A - Shaft Width": format_woodruff_range(row["keyseat_width_min"], row["keyseat_width_max"]),
+            "Key No.": row["key_no"],
+            "ANSI Key No.": row["ansi_key_no"],
+            "Nominal Size": row["nominal_size"],
+            "F - Cutter Diameter": format_woodruff_range(row["cutter_diameter_min"], row["cutter_diameter_max"]),
+            "A - Keyseat Width": format_woodruff_range(row["keyseat_width_min"], row["keyseat_width_max"]),
             "B - Shaft Depth": format_woodruff_target(row["shaft_depth"], WOODRUFF_TOLERANCES["shaft_depth"]),
-            "F - Cutter Dia": format_woodruff_range(row["cutter_diameter_min"], row["cutter_diameter_max"]),
             "C - Key Above Shaft": format_woodruff_target(row["key_above_shaft"], WOODRUFF_TOLERANCES["key_above_shaft"]),
         }
         for row in rows
@@ -114,8 +118,9 @@ def build_woodruff_primary_display_rows(rows: list[dict]) -> list[dict]:
 def build_woodruff_hub_display_rows(rows: list[dict]) -> list[dict]:
     return [
         {
-            "Key No.": row["key_number"],
-            "Nominal Size Key": row["nominal_size"],
+            "Key No.": row["key_no"],
+            "ANSI Key No.": row["ansi_key_no"],
+            "Nominal Size": row["nominal_size"],
             "D - Hub Width": format_woodruff_target(row["hub_width"], WOODRUFF_TOLERANCES["hub_width"]),
             "E - Hub Depth": format_woodruff_target(row["hub_depth"], WOODRUFF_TOLERANCES["hub_depth"]),
         }
@@ -464,7 +469,7 @@ with tab_woodruff:
     st.markdown(
         """
 <div style="font-size:0.92rem; line-height:1.35;">
-Look up ANSI Woodruff key sizes by key number or by nominal size. Good for checking cutter diameter and keyseat depth before you start programming.
+Look up Woodruff keys by common Key No., ANSI Key No., or nominal size. Good for checking cutter diameter and keyseat depth before you start programming.
 </div>
 """,
         unsafe_allow_html=True,
@@ -500,14 +505,18 @@ E = hub keyseat depth
 
     lookup_mode = st.radio(
         "Lookup By",
-        ["Key Number", "Nominal Size"],
+        ["Key No.", "ANSI Key No.", "Nominal Size"],
         horizontal=True,
         key="woodruff_lookup_mode"
     )
 
-    if lookup_mode == "Key Number":
-        selected_key_number = st.selectbox("Key Number", WOODRUFF_KEY_NUMBERS, key="woodruff_key_number")
-        lookup_rows = [get_woodruff_key_by_number(selected_key_number)]
+    if lookup_mode == "Key No.":
+        selected_key_no = st.selectbox("Key No.", WOODRUFF_KEY_NOS, key="woodruff_key_no")
+        lookup_rows = [get_woodruff_key_by_key_no(selected_key_no)]
+        lookup_rows = [row for row in lookup_rows if row is not None]
+    elif lookup_mode == "ANSI Key No.":
+        selected_ansi_key_no = st.selectbox("ANSI Key No.", WOODRUFF_ANSI_KEY_NOS, key="woodruff_ansi_key_no")
+        lookup_rows = [get_woodruff_key_by_ansi_key_no(selected_ansi_key_no)]
         lookup_rows = [row for row in lookup_rows if row is not None]
     else:
         selected_nominal_size = st.selectbox("Nominal Size", WOODRUFF_NOMINAL_SIZES, key="woodruff_nominal_size")
@@ -518,17 +527,24 @@ E = hub keyseat depth
 
     if len(lookup_rows) == 1:
         row = lookup_rows[0]
-        c1, c2 = st.columns(2)
-        c1.metric("Key Number", row["key_number"])
-        c2.metric("Nominal Size", row["nominal_size"])
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Key No.", row["key_no"])
+        c2.metric("ANSI Key No.", row["ansi_key_no"])
+        c3.metric("Nominal Size", row["nominal_size"])
 
     st.markdown("### Primary Modeling / Programming Values")
     st.table(primary_display_rows)
     with st.expander("Hub Keyseat Reference D/E", expanded=False):
         st.table(hub_display_rows)
     st.caption(
+        "Key No. is the common Woodruff key number. ANSI Key No. identifies the nominal size; "
+        "the last two digits indicate diameter in eighths, and the preceding digit(s) indicate "
+        "width in thirty-seconds."
+    )
+    st.caption(
         "Source: "
         f"{WOODRUFF_KEY_SOURCE}. "
+        f"Key No. to ANSI Key No. mapping from {WOODRUFF_KEY_MAPPING_SOURCE}. "
         "A and F show ANSI min/max ranges. B, C, D, and E include ANSI tolerances."
     )
 

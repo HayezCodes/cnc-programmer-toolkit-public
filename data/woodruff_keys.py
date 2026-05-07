@@ -1,4 +1,5 @@
 WOODRUFF_KEY_SOURCE = "ANSI B17.2-1967 (R1998) Table 10 - ANSI Keyseat Dimensions for Woodruff Keys"
+WOODRUFF_KEY_MAPPING_SOURCE = 'FastenerMart "Woodruff Key Dimensions" PDF'
 
 WOODRUFF_TOLERANCES = {
     "shaft_depth": "+0.005 / -0.000",
@@ -7,7 +8,7 @@ WOODRUFF_TOLERANCES = {
     "hub_depth": "+0.005 / -0.000",
 }
 
-WOODRUFF_KEYS = [
+_WOODRUFF_KEYS_RAW = [
     {"key_number": "202", "nominal_size": "1/16 x 1/4", "keyseat_width_min": 0.0615, "keyseat_width_max": 0.0630, "shaft_depth": 0.0728, "cutter_diameter_min": 0.2500, "cutter_diameter_max": 0.2680, "key_above_shaft": 0.0312, "hub_width": 0.0635, "hub_depth": 0.0372},
     {"key_number": "202.5", "nominal_size": "1/16 x 5/16", "keyseat_width_min": 0.0615, "keyseat_width_max": 0.0630, "shaft_depth": 0.1038, "cutter_diameter_min": 0.3120, "cutter_diameter_max": 0.3300, "key_above_shaft": 0.0312, "hub_width": 0.0635, "hub_depth": 0.0372},
     {"key_number": "302.5", "nominal_size": "3/32 x 5/16", "keyseat_width_min": 0.0928, "keyseat_width_max": 0.0943, "shaft_depth": 0.0882, "cutter_diameter_min": 0.3120, "cutter_diameter_max": 0.3300, "key_above_shaft": 0.0469, "hub_width": 0.0948, "hub_depth": 0.0529},
@@ -76,15 +77,130 @@ WOODRUFF_KEYS = [
     {"key_number": "2428", "nominal_size": "3/4 x 3-1/2", "keyseat_width_min": 0.7485, "keyseat_width_max": 0.7505, "shaft_depth": 0.5580, "cutter_diameter_min": 3.5000, "cutter_diameter_max": 3.5350, "key_above_shaft": 0.3750, "hub_width": 0.7510, "hub_depth": 0.3810},
 ]
 
+WOODRUFF_KEY_NO_TO_ANSI = {
+    "201": "202",
+    "206": "202.5",
+    "207": "302.5",
+    "211": "203",
+    "212": "303",
+    "213": "403",
+    "1": "204",
+    "2": "304",
+    "3": "404",
+    "4": "305",
+    "5": "405",
+    "6": "505",
+    "61": "605",
+    "7": "406",
+    "8": "506",
+    "9": "606",
+    "91": "806",
+    "10": "507",
+    "11": "607",
+    "12": "707",
+    "A": "807",
+    "13": "608",
+    "14": "708",
+    "15": "808",
+    "B": "1008",
+    "152": "1208",
+    "16": "609",
+    "17": "709",
+    "18": "809",
+    "C": "1009",
+    "19": "610",
+    "20": "710",
+    "21": "810",
+    "D": "1010",
+    "E": "1210",
+    "22": "811",
+    "23": "1011",
+    "F": "1211",
+    "24": "812",
+    "25": "1012",
+    "G": "1212",
+    "126": "617-1",
+    "127": "817-1",
+    "128": "1017-1",
+    "129": "1217-1",
+    "26": "617",
+    "27": "817",
+    "28": "1017",
+    "29": "1217",
+    "RX": "822-1",
+    "SX": "1022-1",
+    "TX": "1222-1",
+    "UX": "1422-1",
+    "VX": "1622-1",
+    "R": "822",
+    "S": "1022",
+    "T": "1222",
+    "U": "1422",
+    "V": "1622",
+    "30": "1228",
+    "31": "1428",
+    "32": "1628",
+    "33": "1828",
+    "34": "2028",
+    "35": "2228",
+    "36": "2428",
+}
+
+_WOODRUFF_ANSI_TO_KEY_NO = {ansi_key_no: key_no for key_no, ansi_key_no in WOODRUFF_KEY_NO_TO_ANSI.items()}
+
+
+def _normalize_woodruff_lookup(value: str) -> str:
+    return str(value).strip().upper()
+
+
+def _build_woodruff_key_row(raw_row: dict) -> dict:
+    ansi_key_no = raw_row["key_number"]
+    key_no = _WOODRUFF_ANSI_TO_KEY_NO.get(ansi_key_no)
+    if key_no is None:
+        raise KeyError(f"Missing Key No. mapping for ANSI Key No. {ansi_key_no}")
+
+    return {
+        "key_no": key_no,
+        "ansi_key_no": ansi_key_no,
+        "key_number": ansi_key_no,
+        "nominal_size": raw_row["nominal_size"],
+        "keyseat_width_min": raw_row["keyseat_width_min"],
+        "keyseat_width_max": raw_row["keyseat_width_max"],
+        "shaft_depth": raw_row["shaft_depth"],
+        "cutter_diameter_min": raw_row["cutter_diameter_min"],
+        "cutter_diameter_max": raw_row["cutter_diameter_max"],
+        "key_above_shaft": raw_row["key_above_shaft"],
+        "hub_width": raw_row["hub_width"],
+        "hub_depth": raw_row["hub_depth"],
+    }
+
+
+WOODRUFF_KEYS = [_build_woodruff_key_row(row) for row in _WOODRUFF_KEYS_RAW]
+
+WOODRUFF_KEY_NOS = [row["key_no"] for row in WOODRUFF_KEYS]
+WOODRUFF_ANSI_KEY_NOS = [row["ansi_key_no"] for row in WOODRUFF_KEYS]
 WOODRUFF_KEY_NUMBERS = [row["key_number"] for row in WOODRUFF_KEYS]
 WOODRUFF_NOMINAL_SIZES = list(dict.fromkeys(row["nominal_size"] for row in WOODRUFF_KEYS))
 
 
-def get_woodruff_key_by_number(key_number: str) -> dict | None:
+def get_woodruff_key_by_key_no(key_no: str) -> dict | None:
+    normalized_key_no = _normalize_woodruff_lookup(key_no)
     for row in WOODRUFF_KEYS:
-        if row["key_number"] == key_number:
+        if _normalize_woodruff_lookup(row["key_no"]) == normalized_key_no:
             return row
     return None
+
+
+def get_woodruff_key_by_ansi_key_no(ansi_key_no: str) -> dict | None:
+    normalized_ansi_key_no = _normalize_woodruff_lookup(ansi_key_no)
+    for row in WOODRUFF_KEYS:
+        if _normalize_woodruff_lookup(row["ansi_key_no"]) == normalized_ansi_key_no:
+            return row
+    return None
+
+
+def get_woodruff_key_by_number(key_number: str) -> dict | None:
+    return get_woodruff_key_by_ansi_key_no(key_number)
 
 
 def get_woodruff_keys_by_nominal_size(nominal_size: str) -> list[dict]:
