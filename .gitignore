@@ -1,5 +1,5 @@
-prompts/done/*
-!prompts/done/.gitkeep
+docs/prompts/done/*
+!docs/prompts/done/.gitkeep
 
 # Python bytecode and cache directories
 __pycache__/
@@ -7,8 +7,18 @@ __pycache__/
 *$py.class
 .pytest_cache/
 pytest-cache-files-*/
+.streamlit/cache/
 .DS_Store
 Thumbs.db
 *.tmp
 *.bak
 *.swp
+*.db
+*.sqlite
+*.sqlite3
+.env
+.venv/
+venv/
+outputs/
+tmp*/
+.vscode/

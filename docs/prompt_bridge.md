@@ -6,4 +6,4 @@ Run:
 powershell -ExecutionPolicy Bypass -File .\scripts\start_prompt_bridge.ps1
 
 Send prompts from phone via:
-prompts/inbox/
+docs/prompts/inbox/
