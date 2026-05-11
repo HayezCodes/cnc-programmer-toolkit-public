@@ -28,7 +28,7 @@ render_sidebar_nav("Speeds & Feeds")
 render_cutting_mode_sidebar()
 
 st.title("Speeds & Feeds")
-st.caption("Empower MFG - Built for Joshua")
+st.caption("General reference starting values. Verify with tool vendor data, machine condition, setup, and material.")
 
 
 def apply_cut_mode(value, kind="sfm"):

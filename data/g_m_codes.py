@@ -25,10 +25,10 @@ G_CODES = [
     {"code": "G90", "group": "Positioning", "machine": "Both", "meaning": "Absolute programming", "note": "Moves reference current work offset zero."},
     {"code": "G91", "group": "Positioning", "machine": "Both", "meaning": "Incremental programming", "note": "Moves reference current position. Easy to make mistakes with."},
     {"code": "G94", "group": "Feed", "machine": "Mill", "meaning": "Feed per minute", "note": "Mill default in your workflow."},
-    {"code": "G95", "group": "Feed", "machine": "Lathe", "meaning": "Feed per revolution", "note": "Lathe default in your workflow. Do not use on Makino mill."},
+    {"code": "G95", "group": "Feed", "machine": "Lathe", "meaning": "Feed per revolution", "note": "Common lathe feed mode. Verify behavior before using on any mill or live-tool operation."},
     {"code": "G96", "group": "Spindle", "machine": "Lathe", "meaning": "Constant surface speed", "note": "Use with a proper G50 spindle limit."},
     {"code": "G97", "group": "Spindle", "machine": "Lathe", "meaning": "RPM mode", "note": "Fixed spindle RPM."},
-    {"code": "G98", "group": "Return / Feed", "machine": "Both", "meaning": "Cycle return / control-specific", "note": "Meaning depends on control. Your steady-rest notes use G98 G4 X1.0 after rest moves."},
+    {"code": "G98", "group": "Return / Feed", "machine": "Both", "meaning": "Cycle return / control-specific", "note": "Meaning depends on control. Verify the machine manual and posted output."},
     {"code": "G99", "group": "Return / Feed", "machine": "Both", "meaning": "Cycle return / control-specific", "note": "Meaning depends on control. Verify machine behavior."},
 ]
 
@@ -42,10 +42,7 @@ M_CODES = [
     {"code": "M08", "group": "Coolant", "machine": "Both", "meaning": "Coolant on", "note": "Standard coolant on."},
     {"code": "M09", "group": "Coolant", "machine": "Both", "meaning": "Coolant off", "note": "Standard coolant off."},
     {"code": "M19", "group": "Spindle", "machine": "Mill", "meaning": "Spindle orient", "note": "Often used before tool change or spindle orientation operations."},
-    {"code": "M26", "group": "Coolant", "machine": "652 Makino", "meaning": "Through-spindle coolant", "note": "Makino-specific rule from your shop notes."},
     {"code": "M30", "group": "Program Control", "machine": "Both", "meaning": "End and reset", "note": "Ends program and rewinds/reset."},
-    {"code": "M60", "group": "Program Control", "machine": "652 Makino", "meaning": "Program stop / pallet-related by machine", "note": "Your Makino standard specifically calls for M60 at start/end when required."},
-    {"code": "M87", "group": "Special", "machine": "Steady-rest family", "meaning": "Shop-specific steady-rest follow code", "note": "Your machine notes reference whether M87 is inserted after rest moves."},
     {"code": "M98", "group": "Subprogram", "machine": "Both", "meaning": "Call subprogram", "note": "Used where posts support subprograms."},
     {"code": "M99", "group": "Subprogram", "machine": "Both", "meaning": "Return / loop", "note": "Returns from subprogram or loops depending on context."},
 ]
@@ -55,7 +52,6 @@ SHOP_WARNINGS = [
     "TOOL LENGTH: G43 uses H offset, G49 cancels. Verify correct H before cycle start.",
     "LATHE DEFAULTS: feeds in IPR, roughing insert DNMG, finishing insert VNMG.",
     "MILL DEFAULTS: feeds in IPM.",
-    "MAKINO 652: NO G95, NO B moves, M26 through-spindle coolant, H = tool number, D = tool number + 100.",
     "LATHE CSS: verify G50 spindle limit before trusting G96.",
     "CHECK REAL MACHINE BEHAVIOR for any control-specific canned cycles or return modes before use.",
 ]

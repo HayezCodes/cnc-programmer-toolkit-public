@@ -154,7 +154,7 @@ render_sidebar_nav("Calculators")
 
 st.markdown('<div class="calc-title-wrap">', unsafe_allow_html=True)
 st.title("Calculators")
-st.caption("Empower MFG - Built for Joshua")
+st.caption("General shop math calculators for CNC programming support.")
 st.markdown("</div>", unsafe_allow_html=True)
 
 tab_triangle, tab_keyway, tab_woodruff, tab_chamfer, tab_breakthrough, tab_convert = st.tabs(

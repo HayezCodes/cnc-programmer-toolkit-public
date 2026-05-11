@@ -31,7 +31,7 @@ render_sidebar_nav("Threads")
 render_cutting_mode_sidebar()
 
 st.title("Threads")
-st.caption("Empower MFG - Built for Joshua")
+st.caption("General thread, tap drill, and modeling reference. Verify final values against the print, gage, and applicable standards.")
 
 THREAD_SERIES_SUFFIXES = ("UNC", "UNF", "UNEF", "UN", "UNS")
 

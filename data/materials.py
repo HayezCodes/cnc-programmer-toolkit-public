@@ -6,7 +6,7 @@ LATHE_MATERIALS = {
             "doc": ".15 - .25 / side",
             "insert": "DNMG",
             "chipbreaker": "PF for softer steels, MR/MF/MRR for harder steels",
-            "notes": "10 series steel roughing baseline at Empower MFG."
+            "notes": "General 10 series steel roughing starting point."
         },
         "finish": {
             "sfm": 700,
@@ -14,7 +14,7 @@ LATHE_MATERIALS = {
             "doc": ".010 - .015 total remaining",
             "insert": "VNMG",
             "chipbreaker": "PF for softer steels, MR/MF/MRR for harder steels",
-            "notes": "10 series steel finishing baseline at Empower MFG."
+            "notes": "General 10 series steel finishing starting point."
         }
     },
     "40 Series Steel": {
@@ -24,7 +24,7 @@ LATHE_MATERIALS = {
             "doc": ".15 - .25 / side",
             "insert": "DNMG",
             "chipbreaker": "PF for softer steels, MR/MF/MRR for harder steels",
-            "notes": "40 series steel roughing baseline at Empower MFG."
+            "notes": "General 40 series steel roughing starting point."
         },
         "finish": {
             "sfm": 600,
@@ -32,7 +32,7 @@ LATHE_MATERIALS = {
             "doc": ".010 - .015 total remaining",
             "insert": "VNMG",
             "chipbreaker": "PF for softer steels, MR/MF/MRR for harder steels",
-            "notes": "40 series steel finishing baseline at Empower MFG."
+            "notes": "General 40 series steel finishing starting point."
         }
     },
     "17-4 / 300 Series": {
@@ -42,7 +42,7 @@ LATHE_MATERIALS = {
             "doc": ".120 / side",
             "insert": "DNMG",
             "chipbreaker": "MR / MF / MRR",
-            "notes": "Mazak OD roughing baseline."
+            "notes": "General OD roughing starting point."
         },
         "finish": {
             "sfm": 280,

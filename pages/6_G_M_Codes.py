@@ -29,7 +29,7 @@ st.markdown(
 render_sidebar_nav("G & M Codes")
 
 st.title("G & M Codes")
-st.caption("Empower MFG - Programming Reference")
+st.caption("General reference only. G-code and M-code behavior can vary by machine/control.")
 
 st.warning(
     "MOST IMPORTANT: Verify machine state, active offset, spindle direction, coolant state, tool comp, and tool length before cycle start."
@@ -41,7 +41,7 @@ search = st.text_input(
 )
 machine_filter = st.selectbox(
     "Machine Type",
-    ["All", "Both", "Lathe", "Mill", "652 Makino", "Steady-rest family"],
+    ["All", "Both", "Lathe", "Mill"],
 )
 
 

@@ -11,8 +11,6 @@ def render_sidebar_nav(current_page: str):
     st.sidebar.markdown("### Main")
     st.sidebar.page_link("app.py", label="Home")
     st.sidebar.page_link("pages/1_Speeds_Feeds.py", label="Speeds & Feeds")
-    st.sidebar.page_link("pages/4_Standards.py", label="Standards")
-    st.sidebar.page_link("pages/5_Machines.py", label="Machines")
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Tools")
