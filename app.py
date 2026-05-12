@@ -113,13 +113,37 @@ with tool_col1:
     <div class="tool-card">
         <div class="tool-icon">📐</div>
         <div class="tool-title">Calculators</div>
-        <div class="tool-text">Triangle and keyway calculators with the richer layout you wanted.</div>
+        <div class="tool-text">Triangle, keyway, Woodruff, drill breakthrough, and unit conversion calculators.</div>
     </div>
     """, unsafe_allow_html=True)
     if st.button("Calculators", use_container_width=True):
         st.switch_page("pages/3_Calculators.py")
 
 with tool_col2:
+    st.markdown("""
+    <div class="tool-card">
+        <div class="tool-icon">⌵</div>
+        <div class="tool-title">Chamfer Calculator</div>
+        <div class="tool-text">Hole chamfer and countersink depth from pilot diameter, target OD, and angle.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Chamfer Calculator", use_container_width=True):
+        st.switch_page("pages/4_Chamfer_Calculator.py")
+
+tool_col3, tool_col4 = st.columns(2)
+
+with tool_col3:
+    st.markdown("""
+    <div class="tool-card">
+        <div class="tool-icon">◎</div>
+        <div class="tool-title">Center Drill Calculator</div>
+        <div class="tool-text">Finished center or spot diameter depth with size presets or custom pilot input.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Center Drill Calculator", use_container_width=True):
+        st.switch_page("pages/5_Center_Drill_Calculator.py")
+
+with tool_col4:
     st.markdown("""
     <div class="tool-card">
         <div class="tool-icon">🧾</div>

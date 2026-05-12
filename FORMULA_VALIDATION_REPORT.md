@@ -131,13 +131,25 @@ Chamfer diameter growth uses the included angle:
 target_diameter = existing_diameter + 2 * axial_drop * tan(included_angle / 2) - backoff
 ```
 
-Status: verified with a 90 degree included-angle case.
+Chamfer axial depth uses the inverse cone relationship:
+
+```text
+axial_depth = (target_diameter - existing_diameter) / (2 * tan(included_angle / 2))
+```
+
+Per-side angle inputs are converted to included angle before the same formula is used.
+
+Status: verified with 90 degree included-angle, per-side angle equivalence, and invalid geometry cases.
 
 ### Center Drill Math
 
 Center drill depth and diameter calculations use the same included-angle geometry and were verified as inverse operations for a 90 degree included-angle tool.
 
-Status: verified.
+```text
+required_depth = C_offset + (target_spot_diameter - pilot_diameter) / (2 * tan(included_angle / 2))
+```
+
+Status: verified with 90 degree and 60 degree included-angle cases, inverse diameter checks, and invalid geometry cases.
 
 ### Triangle Calculator
 
@@ -180,4 +192,3 @@ No clear calculator formula bug was found during this pass.
 No customer names, job numbers, private Windows paths, Empower references, drawings, setup sheets, or real CNC programs were found in the inspected calculator/source files during this pass.
 
 Generic policy wording in safety documents may still mention terms such as customer, drawing, or job number as examples of prohibited content. Those are documentation guardrails, not private data.
-

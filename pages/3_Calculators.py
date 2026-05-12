@@ -1,7 +1,6 @@
 import math
 from decimal import Decimal, ROUND_HALF_UP
 import streamlit as st
-from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label, get_center_drill_options
 from data.woodruff_keys import (
     WOODRUFF_ANSI_KEY_NOS,
     WOODRUFF_KEY_MAPPING_SOURCE,
@@ -13,11 +12,6 @@ from data.woodruff_keys import (
     get_woodruff_key_by_key_no,
     get_woodruff_keys_by_nominal_size,
 )
-from utils.holemaking import (
-    center_drill_diameter_at_depth,
-    center_drill_total_depth_for_target,
-    derive_center_drill_c_from_full_z,
-)
 from utils.ui_helpers import render_sidebar_nav
 
 st.set_page_config(
@@ -25,12 +19,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-def center_drill_select_label(option: str) -> str:
-    if option == "Custom":
-        return "Custom"
-    return center_drill_label(option)
-
 
 def safe_tangent(angle_degrees: float) -> float | None:
     if angle_degrees <= 0 or angle_degrees >= 90:
@@ -55,49 +43,6 @@ def format_shop_decimal(value: float, places: int = 4) -> str:
     quantizer = Decimal("1").scaleb(-places)
     adjusted_value = value + 1e-12 if value >= 0 else value - 1e-12
     return format(Decimal(str(adjusted_value)).quantize(quantizer, rounding=ROUND_HALF_UP), f".{places}f")
-
-
-def get_center_drill_full_target_diameter(center_drill_data: dict) -> float:
-    return center_drill_data.get("bell", center_drill_data["body"])
-
-
-def get_center_drill_default_c_details(center_drill_data: dict) -> dict:
-    chart_c = center_drill_data["pilot_length"]
-    default_c = chart_c
-    derived_c = None
-    source_label = "Chart C default"
-    status_text = "Using chart C default. Verify against Mastercam or edit C if depth does not match."
-    warning_text = None
-
-    measured_full_z = center_drill_data.get("mastercam_full_z_depth")
-    if center_drill_data.get("full_z_verified") and measured_full_z is not None:
-        full_target_dia = get_center_drill_full_target_diameter(center_drill_data)
-        measured_full_depth = abs(measured_full_z)
-        try:
-            derived_c = derive_center_drill_c_from_full_z(
-                center_drill_data["pilot"],
-                full_target_dia,
-                center_drill_data["angle"],
-                measured_full_depth,
-            )
-        except ValueError as exc:
-            warning_text = str(exc)
-        else:
-            if derived_c < 0:
-                warning_text = "Derived C from measured full Z is negative. Falling back to chart C default."
-            else:
-                default_c = derived_c
-                source_label = "Shop/Mastercam measured full Z"
-                status_text = "Using shop/Mastercam measured full Z depth to derive C."
-
-    return {
-        "chart_c": chart_c,
-        "default_c": default_c,
-        "derived_c": derived_c,
-        "source_label": source_label,
-        "status_text": status_text,
-        "warning_text": warning_text,
-    }
 
 
 def build_woodruff_primary_display_rows(rows: list[dict]) -> list[dict]:
@@ -158,7 +103,7 @@ st.caption("General shop math calculators for CNC programming support.")
 st.markdown("</div>", unsafe_allow_html=True)
 
 tab_triangle, tab_keyway, tab_woodruff, tab_chamfer, tab_breakthrough, tab_convert = st.tabs(
-    ["Triangle", "Keyway", "Woodruff Key", "Chamfer", "Drill Breakthrough", "IN ↔ MM"]
+    ["Triangle", "Keyway", "Woodruff Key", "Slot Chamfer", "Drill Breakthrough", "IN ↔ MM"]
 )
 
 with tab_triangle:
@@ -549,146 +494,18 @@ E = hub keyseat depth
     )
 
 with tab_chamfer:
-    st.subheader("Chamfer Calculator")
+    st.subheader("Keyway / Slot Chamfer Calculator")
 
     st.markdown(
         """
 <div style="font-size:0.92rem; line-height:1.35;">
-Use this for quick edge-break math and for programming chamfer tool depth. Handy for keyway edge breaks and general chamfers.
+Use this for keyway and slot edge-break math. For hole chamfer/countersink OD depth, use the separate Chamfer Calculator page.
 </div>
 """,
         unsafe_allow_html=True,
     )
-
-    with st.container(border=True):
-        st.markdown("### Center Drill / Finished Center Z")
-        st.write(
-            "Use this when center drilling the end of a shaft/part and you want a specific finished center diameter on the face."
-        )
-
-        center_drill_preset = st.selectbox(
-            "Center Drill Size",
-            get_center_drill_options(include_custom=False),
-            format_func=center_drill_select_label,
-            key="center_drill_finished_center_preset"
-        )
-        center_drill_data = CENTER_DRILL_PRESETS[center_drill_preset]
-        center_drill_defaults = get_center_drill_default_c_details(center_drill_data)
-        center_drill_pilot_dia = center_drill_data["pilot"]
-        center_drill_body_dia = get_center_drill_full_target_diameter(center_drill_data)
-        included_angle_deg = center_drill_data["angle"]
-        center_drill_selected_size_key = "center_drill_finished_center_selected_size"
-        center_drill_c_widget_key = "center_drill_finished_center_c_input"
-        derived_default_c = float(center_drill_defaults["default_c"])
-
-        if st.session_state.get(center_drill_selected_size_key) != center_drill_preset:
-            st.session_state[center_drill_selected_size_key] = center_drill_preset
-            st.session_state[center_drill_c_widget_key] = derived_default_c
-        elif center_drill_c_widget_key not in st.session_state:
-            st.session_state[center_drill_c_widget_key] = derived_default_c
-
-        tool_info_col1, tool_info_col2, tool_info_col3, tool_info_col4 = st.columns(4)
-        tool_info_col1.metric("Style", center_drill_data["style"])
-        tool_info_col2.metric("Pilot Diameter", format_shop_decimal(center_drill_pilot_dia))
-        tool_info_col3.metric("Included Angle", f"{included_angle_deg:.1f} deg")
-        tool_info_col4.metric("Body / Bell Diameter", format_shop_decimal(center_drill_body_dia))
-
-        input_col1, input_col2, input_col3 = st.columns(3)
-        with input_col1:
-            desired_finished_center_diameter = st.number_input(
-                "Desired Finished Center Diameter",
-                min_value=0.0001,
-                value=0.6250,
-                step=0.0010,
-                format="%.4f",
-                key="center_drill_finished_center_diameter"
-            )
-            backoff_clearance_dia = st.number_input(
-                "Backoff / Clearance on Diameter",
-                min_value=0.0000,
-                value=0.0000,
-                step=0.0005,
-                format="%.4f",
-                key="center_drill_finished_center_backoff"
-            )
-        with input_col2:
-            top_reference_z = st.number_input(
-                "Top Reference Z",
-                value=0.0000,
-                step=0.0010,
-                format="%.4f",
-                key="center_drill_finished_center_top_z"
-            )
-            tool_pilot_length_c = st.number_input(
-                "Tool Pilot Length / Full Depth Offset (C)",
-                min_value=0.0000,
-                step=0.0010,
-                format="%.4f",
-                key=center_drill_c_widget_key
-            )
-        with input_col3:
-            st.caption(f"Preset chart C default: {format_shop_decimal(center_drill_defaults['chart_c'])}")
-            if center_drill_defaults["derived_c"] is not None and center_drill_defaults["derived_c"] >= 0:
-                st.caption(f"Derived C from measured full Z: {format_shop_decimal(center_drill_defaults['derived_c'])}")
-            if center_drill_data.get("calibration_note"):
-                st.caption(center_drill_data["calibration_note"])
-
-        target_center_dia = desired_finished_center_diameter - backoff_clearance_dia
-        center_drill_invalid = False
-        center_drill_warnings: list[str] = []
-
-        if backoff_clearance_dia < 0:
-            st.error("Backoff / Clearance on Diameter must be zero or positive.")
-            center_drill_invalid = True
-
-        if tool_pilot_length_c < 0:
-            st.error("Tool Pilot Length / Full Depth Offset (C) must be zero or positive.")
-            center_drill_invalid = True
-
-        if target_center_dia <= center_drill_pilot_dia:
-            st.error("Target center diameter must be larger than the center drill pilot diameter.")
-            center_drill_invalid = True
-
-        if target_center_dia > center_drill_body_dia:
-            center_drill_warnings.append("Target center diameter exceeds selected center drill body/bell diameter.")
-
-        if center_drill_data.get("full_z_verified") and center_drill_data.get("mastercam_full_z_depth") is not None:
-            st.info("Using shop/Mastercam-derived C default.")
-        else:
-            st.warning("Using chart C default. Verify against Mastercam or edit C if depth does not match.")
-
-        if center_drill_defaults["warning_text"]:
-            center_drill_warnings.append(center_drill_defaults["warning_text"])
-
-        if not center_drill_invalid:
-            program_depth = center_drill_total_depth_for_target(
-                center_drill_pilot_dia,
-                target_center_dia,
-                included_angle_deg,
-                tool_pilot_length_c,
-            )
-            program_z = top_reference_z - program_depth
-            diameter_at_program_z = center_drill_diameter_at_depth(
-                center_drill_pilot_dia,
-                included_angle_deg,
-                tool_pilot_length_c,
-                abs(program_z - top_reference_z),
-            )
-
-            result_col1, result_col2, result_col3 = st.columns(3)
-            result_col1.metric("Target Center Diameter", format_shop_decimal(target_center_dia))
-            result_col2.metric("Program Z", format_shop_decimal(program_z))
-            result_col3.metric("Diameter at Program Z", format_shop_decimal(diameter_at_program_z))
-
-            with st.expander("Calculation Details", expanded=False):
-                st.write(f"Tool C Used: {format_shop_decimal(tool_pilot_length_c)}")
-                st.write(f"C Source: {center_drill_defaults['source_label']}")
-                st.write(f"Pilot Diameter: {format_shop_decimal(center_drill_pilot_dia)}")
-                st.write(f"Included Angle: {included_angle_deg:.1f} deg")
-                st.write(f"Body / Bell Diameter: {format_shop_decimal(center_drill_body_dia)}")
-
-        for warning_text in center_drill_warnings:
-            st.warning(warning_text)
+    if st.button("Open Hole Chamfer Calculator", use_container_width=False):
+        st.switch_page("pages/4_Chamfer_Calculator.py")
 
     with st.container(border=True):
         st.markdown("### Keyway / Slot Chamfer Final Z")

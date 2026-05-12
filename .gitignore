@@ -19,6 +19,7 @@ Thumbs.db
 .env
 .venv/
 venv/
+run_public_toolkit.bat
 outputs/
 tmp*/
 .vscode/

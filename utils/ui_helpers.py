@@ -16,4 +16,6 @@ def render_sidebar_nav(current_page: str):
     st.sidebar.markdown("### Tools")
     st.sidebar.page_link("pages/2_Threads.py", label="Threads")
     st.sidebar.page_link("pages/3_Calculators.py", label="Calculators")
+    st.sidebar.page_link("pages/4_Chamfer_Calculator.py", label="Chamfer Calculator")
+    st.sidebar.page_link("pages/5_Center_Drill_Calculator.py", label="Center Drill Calculator")
     st.sidebar.page_link("pages/6_G_M_Codes.py", label="G & M Codes")

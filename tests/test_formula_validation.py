@@ -17,6 +17,8 @@ from utils.formulas import (
     tap_feed_mm_min_from_pitch,
 )
 from utils.holemaking import (
+    chamfer_depth_from_diameters,
+    chamfer_width_from_depth,
     center_drill_diameter_at_depth,
     center_drill_total_depth_for_target,
     cone_depth_between_diameters,
@@ -124,6 +126,29 @@ def test_chamfer_target_diameter_assumes_included_angle():
     assert target_diameter_from_length_and_angle(0.25, 0.01, 90.0, backoff_clearance_dia=0.002) == pytest.approx(0.268)
 
 
+def test_chamfer_depth_from_pilot_to_target_od():
+    assert chamfer_depth_from_diameters(0.25, 0.375, 90.0) == pytest.approx(0.0625)
+    assert chamfer_width_from_depth(0.0625, 90.0) == pytest.approx(0.0625)
+
+
+def test_chamfer_per_side_angle_matches_included_angle():
+    per_side_angle = 45.0
+    included_angle = per_side_angle * 2
+
+    assert chamfer_depth_from_diameters(0.25, 0.375, included_angle) == pytest.approx(0.0625)
+
+
+def test_chamfer_rejects_invalid_geometry_inputs():
+    with pytest.raises(ValueError):
+        chamfer_depth_from_diameters(0.25, 0.25, 90.0)
+
+    with pytest.raises(ValueError):
+        chamfer_depth_from_diameters(0.25, 0.375, 180.0)
+
+    with pytest.raises(ValueError):
+        chamfer_width_from_depth(-0.001, 90.0)
+
+
 def test_center_drill_depth_and_diameter_are_inverse_for_90_degree_tool():
     depth = center_drill_total_depth_for_target(
         pilot_dia=0.125,
@@ -135,6 +160,29 @@ def test_center_drill_depth_and_diameter_are_inverse_for_90_degree_tool():
     assert depth == pytest.approx(0.1125)
     assert center_drill_diameter_at_depth(0.125, 90.0, 0.05, depth) == pytest.approx(0.25)
     assert cone_depth_between_diameters(0.125, 0.25, 90.0) == pytest.approx(0.0625)
+
+
+def test_center_drill_depth_for_60_degree_included_angle():
+    depth = center_drill_total_depth_for_target(
+        pilot_dia=0.125,
+        target_dia=0.25,
+        included_angle_deg=60.0,
+        tool_pilot_length_c=0.05,
+    )
+
+    assert depth == pytest.approx(0.158253175473)
+    assert center_drill_diameter_at_depth(0.125, 60.0, 0.05, depth) == pytest.approx(0.25)
+
+
+def test_center_drill_rejects_invalid_edge_geometry():
+    with pytest.raises(ValueError):
+        center_drill_total_depth_for_target(0.125, 0.124, 60.0, 0.0)
+
+    with pytest.raises(ValueError):
+        center_drill_total_depth_for_target(0.125, 0.25, 0.0, 0.0)
+
+    with pytest.raises(ValueError):
+        center_drill_total_depth_for_target(0.125, 0.25, 60.0, -0.001)
 
 
 def test_triangle_solver_3_4_5_right_triangle():

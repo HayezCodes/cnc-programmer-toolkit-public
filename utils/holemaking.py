@@ -26,6 +26,31 @@ def cone_depth_between_diameters(
     return (target_dia - start_dia) / (2 * included_angle_half_tangent(included_angle_deg))
 
 
+def chamfer_depth_from_diameters(
+    pilot_dia: float,
+    target_dia: float,
+    included_angle_deg: float,
+) -> float:
+    if pilot_dia <= 0:
+        raise ValueError("Pilot / hole diameter must be greater than 0.")
+
+    return cone_depth_between_diameters(
+        pilot_dia,
+        target_dia,
+        included_angle_deg,
+    )
+
+
+def chamfer_width_from_depth(
+    axial_depth: float,
+    included_angle_deg: float,
+) -> float:
+    if axial_depth < 0:
+        raise ValueError("Axial depth must be zero or positive.")
+
+    return axial_depth * included_angle_half_tangent(included_angle_deg)
+
+
 def center_drill_total_depth_for_target(
     pilot_dia: float,
     target_dia: float,
