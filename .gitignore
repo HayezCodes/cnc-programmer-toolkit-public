@@ -3,6 +3,7 @@ docs/prompts/done/*
 
 # Python bytecode and cache directories
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 .pytest_cache/
