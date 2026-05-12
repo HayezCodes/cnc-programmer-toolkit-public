@@ -21,6 +21,25 @@ st.markdown("""
     padding-top: 2.2rem;
     padding-bottom: 1.2rem;
 }
+
+.workbench-drawer {
+    border: 1px solid rgba(250,250,250,0.12);
+    border-radius: 8px;
+    padding: 14px 16px 12px 16px;
+    background: rgba(255,255,255,0.025);
+    margin: 0.45rem 0 0.85rem 0;
+}
+
+.drawer-title {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.drawer-text {
+    font-size: 0.9rem;
+    opacity: 0.86;
+    line-height: 1.35;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -29,6 +48,25 @@ render_cutting_mode_sidebar()
 
 st.title("Speeds & Feeds")
 st.caption("General reference starting values. Verify with tool vendor data, machine condition, setup, and material.")
+
+st.markdown(
+    """
+<div class="workbench-drawer">
+    <div class="drawer-title">Quick Tools</div>
+    <div class="drawer-text">
+        Jump to broad work areas while you are working through cutting data.
+    </div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+quick_col1, quick_col2 = st.columns(2)
+with quick_col1:
+    if st.button("Math Workbench", use_container_width=True):
+        st.switch_page("pages/3_Calculators.py")
+with quick_col2:
+    if st.button("G/M Codes & References", use_container_width=True):
+        st.switch_page("pages/6_G_M_Codes.py")
 
 
 def apply_cut_mode(value, kind="sfm"):
@@ -219,7 +257,7 @@ def sync_woodruff_reference_state(reference_data: dict):
 st.markdown("### Diameter Units")
 unit_mode = st.radio("Use diameter-style inputs in:", ["STANDARD", "METRIC"], horizontal=True, key="speeds_feeds_unit_mode")
 
-main_tab1, main_tab2 = st.tabs(["Lathe", "Mill"])
+main_tab1, main_tab2, main_tab3 = st.tabs(["Lathe", "Mill", "Threading"])
 
 with main_tab1:
     lathe_tab1, lathe_tab2, lathe_tab3, lathe_tab4 = st.tabs(["Turning", "Drilling", "Live Tooling Endmill", "Live Tooling Drill"])
@@ -271,7 +309,7 @@ with main_tab1:
         with col1:
             material_drill = st.selectbox("Material", list(DRILL_DATA.keys()), key="lathe_drill_material")
         with col2:
-            drill_type = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "CoroDrill", "Center Drill"], key="lathe_drill_type")
+            drill_type = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "Carbide Drill", "Center Drill"], key="lathe_drill_type")
         with col3:
             if drill_type == "Center Drill":
                 center_drill_size, center_drill_preset = render_center_drill_size_selector("lathe_drill")
@@ -369,7 +407,7 @@ with main_tab1:
         with col1:
             material_live_drill = st.selectbox("Material", list(DRILL_DATA.keys()), key="lathe_live_drill_material")
         with col2:
-            drill_type_live = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "CoroDrill", "Center Drill"], key="lathe_live_drill_type")
+            drill_type_live = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "Carbide Drill", "Center Drill"], key="lathe_live_drill_type")
         with col3:
             if drill_type_live == "Center Drill":
                 center_drill_size_live, center_drill_preset_live = render_center_drill_size_selector("lathe_live_drill")
@@ -418,7 +456,7 @@ with main_tab2:
             drill_type_mill = None
             tool_style_mill = None
         elif tool_type == "Drill":
-            drill_type_mill = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "CoroDrill"], key="mill_drill_type")
+            drill_type_mill = st.selectbox("Drill Type", ["HSS", "HSS Coated", "Cobalt", "Carbide Drill"], key="mill_drill_type")
             em_operation = None
             tool_style_mill = None
         elif tool_type == "Spot Drill":
@@ -614,3 +652,24 @@ with main_tab2:
             )
 
         render_operator_notes(material_mill)
+
+with main_tab3:
+    st.subheader("Threading")
+    st.write(
+        "Thread feed, tap drill, and OD model values are part of the same programming workflow. "
+        "Open the full thread worksheet when the operation moves from cutting data into thread geometry."
+    )
+
+    thread_col1, thread_col2, thread_col3 = st.columns(3)
+    with thread_col1:
+        st.markdown("**ID Threads / Tapping**")
+        st.write("Tap feed, thread percent drill estimates, and metric or imperial callout parsing.")
+    with thread_col2:
+        st.markdown("**OD Threading**")
+        st.write("Model diameter, depth estimate, pass count reference, RPM, and IPR feed.")
+    with thread_col3:
+        st.markdown("**Use With Speeds & Feeds**")
+        st.write("Use this after choosing material and operation style, then verify against print and gage requirements.")
+
+    if st.button("Open Full Threads Worksheet", use_container_width=True):
+        st.switch_page("pages/2_Threads.py")

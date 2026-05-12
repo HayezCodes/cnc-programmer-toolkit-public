@@ -5,7 +5,7 @@ from utils.ui_helpers import render_sidebar_nav
 
 
 st.set_page_config(
-    page_title="Chamfer Calculator",
+    page_title="Spot Drill & Hole Chamfer",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -25,6 +25,11 @@ st.markdown(
 header[data-testid="stHeader"] {
     height: 0.8rem;
 }
+
+.calculator-page-header {
+    margin-top: 0.2rem;
+    margin-bottom: 0.55rem;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -41,15 +46,25 @@ def angle_to_included(angle_mode: str, angle_value: float) -> float:
     return angle_value
 
 
-render_sidebar_nav("Chamfer Calculator")
+render_sidebar_nav("Spot Drill & Hole Chamfer")
 
-st.title("Chamfer Calculator")
-st.caption("General countersink and chamfer geometry for CNC programming support.")
+st.markdown('<div class="calculator-page-header">', unsafe_allow_html=True)
+st.title("Spot Drill & Hole Chamfer")
+st.caption("Chamfer/countersink depth around holes for spot drills, chamfer mills, and countersinks.")
+st.markdown("</div>", unsafe_allow_html=True)
+
+nav_col1, nav_col2 = st.columns([1, 1])
+with nav_col1:
+    if st.button("Back to Calculators", use_container_width=True):
+        st.switch_page("pages/3_Calculators.py")
+with nav_col2:
+    if st.button("Center Drill Calculator", use_container_width=True):
+        st.switch_page("pages/5_Center_Drill_Calculator.py")
 
 with st.container(border=True):
-    st.markdown("### Hole Chamfer / Countersink")
+    st.markdown("### Spot Drill / Hole Chamfer / Countersink")
     st.write(
-        "Use this for the axial Z depth needed to grow a pilot or existing hole to a target chamfer OD."
+        "Calculates the axial depth needed to grow a pilot or existing hole to a target chamfer/countersink OD."
     )
 
     input_col1, input_col2, input_col3 = st.columns(3)
@@ -111,4 +126,3 @@ with st.container(border=True):
             st.write("Chamfer width is the radial growth from the pilot/hole diameter to the target OD.")
             st.write("This assumes a simple conical tool or modeled cone with the entered included angle.")
             st.write("Values are general programming geometry; verify against the actual tool and print requirements.")
-

@@ -1,5 +1,5 @@
-# Size 4.5 is intentionally not added here. A measured full Z value was supplied,
-# but the geometry needed for a safe preset entry is not in the current chart.
+# Center drill dimensions are general chart-style reference values. Verify the
+# actual tool geometry before programming a depth from these presets.
 CENTER_DRILL_PRESETS = {
     "00": {
         "style": "Plain",
@@ -7,8 +7,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.015625,
         "body": 0.1250,
         "pilot_length": 0.015625,
-        "full_z_verified": False,
-        "calibration_note": "No shop/Mastercam measured full Z depth has been added for this size yet.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "0": {
         "style": "Plain",
@@ -16,8 +15,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.031250,
         "body": 0.1250,
         "pilot_length": 0.031250,
-        "full_z_verified": False,
-        "calibration_note": "No shop/Mastercam measured full Z depth has been added for this size yet.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "1": {
         "style": "Plain",
@@ -25,9 +23,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.046875,
         "body": 0.1250,
         "pilot_length": 0.046875,
-        "mastercam_full_z_depth": -0.1286,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "2": {
         "style": "Plain",
@@ -35,9 +31,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.078125,
         "body": 0.1875,
         "pilot_length": 0.078125,
-        "mastercam_full_z_depth": -0.1963,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "3": {
         "style": "Plain",
@@ -45,9 +39,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.109375,
         "body": 0.2500,
         "pilot_length": 0.109375,
-        "mastercam_full_z_depth": -0.2640,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "4": {
         "style": "Plain",
@@ -55,9 +47,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.125000,
         "body": 0.3125,
         "pilot_length": 0.125000,
-        "mastercam_full_z_depth": -0.3249,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "5": {
         "style": "Plain",
@@ -65,9 +55,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.187500,
         "body": 0.4375,
         "pilot_length": 0.187500,
-        "mastercam_full_z_depth": -0.4603,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "6": {
         "style": "Plain",
@@ -75,9 +63,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.218750,
         "body": 0.5000,
         "pilot_length": 0.218750,
-        "mastercam_full_z_depth": -0.5280,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "7": {
         "style": "Plain",
@@ -85,9 +71,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.250000,
         "body": 0.6250,
         "pilot_length": 0.250000,
-        "mastercam_full_z_depth": -0.6499,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "8": {
         "style": "Plain",
@@ -95,9 +79,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.312500,
         "body": 0.7500,
         "pilot_length": 0.375000,
-        "mastercam_full_z_depth": -0.7853,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "9": {
         "style": "Plain",
@@ -105,8 +87,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.375000,
         "body": 0.8750,
         "pilot_length": 0.375000,
-        "full_z_verified": False,
-        "calibration_note": "No shop/Mastercam measured full Z depth has been added for this size yet.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "10": {
         "style": "Plain",
@@ -114,9 +95,7 @@ CENTER_DRILL_PRESETS = {
         "pilot": 0.500000,
         "body": 1.2500,
         "pilot_length": 0.500000,
-        "mastercam_full_z_depth": -1.0232,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "11": {
         "style": "Bell",
@@ -125,9 +104,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.1250,
         "bell": 0.1900,
         "pilot_length": 0.046875,
-        "mastercam_full_z_depth": -0.1142,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "12": {
         "style": "Bell",
@@ -136,9 +113,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.1875,
         "bell": 0.2500,
         "pilot_length": 0.062500,
-        "mastercam_full_z_depth": -0.1679,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "13": {
         "style": "Bell",
@@ -147,9 +122,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.2500,
         "bell": 0.3100,
         "pilot_length": 0.093750,
-        "mastercam_full_z_depth": -0.2284,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "14": {
         "style": "Bell",
@@ -158,9 +131,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.3125,
         "bell": 0.4000,
         "pilot_length": 0.109375,
-        "mastercam_full_z_depth": -0.2821,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "15": {
         "style": "Bell",
@@ -169,9 +140,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.4375,
         "bell": 0.5000,
         "pilot_length": 0.156250,
-        "mastercam_full_z_depth": -0.3962,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "16": {
         "style": "Bell",
@@ -180,9 +149,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.5000,
         "bell": 0.5900,
         "pilot_length": 0.187500,
-        "mastercam_full_z_depth": -0.4567,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "17": {
         "style": "Bell",
@@ -191,9 +158,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.6250,
         "bell": 0.6900,
         "pilot_length": 0.218750,
-        "mastercam_full_z_depth": -0.5641,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
     "18": {
         "style": "Bell",
@@ -202,9 +167,7 @@ CENTER_DRILL_PRESETS = {
         "body": 0.7500,
         "bell": 0.7800,
         "pilot_length": 0.250000,
-        "mastercam_full_z_depth": -0.6715,
-        "full_z_verified": True,
-        "calibration_note": "Shop/Mastercam measured full Z depth from handwritten center drill list.",
+        "calibration_note": "General chart-style reference. Verify against the actual tool.",
     },
 }
 

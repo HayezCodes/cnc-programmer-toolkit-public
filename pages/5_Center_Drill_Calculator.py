@@ -26,6 +26,11 @@ st.markdown(
 header[data-testid="stHeader"] {
     height: 0.8rem;
 }
+
+.calculator-page-header {
+    margin-top: 0.2rem;
+    margin-bottom: 0.55rem;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -44,8 +49,18 @@ def center_drill_select_label(option: str) -> str:
 
 render_sidebar_nav("Center Drill Calculator")
 
+st.markdown('<div class="calculator-page-header">', unsafe_allow_html=True)
 st.title("Center Drill Calculator")
 st.caption("Finished center or spot diameter depth from pilot diameter and included-angle geometry.")
+st.markdown("</div>", unsafe_allow_html=True)
+
+nav_col1, nav_col2 = st.columns([1, 1])
+with nav_col1:
+    if st.button("Back to Calculators", use_container_width=True):
+        st.switch_page("pages/3_Calculators.py")
+with nav_col2:
+    if st.button("Spot Drill & Hole Chamfer", use_container_width=True):
+        st.switch_page("pages/4_Chamfer_Calculator.py")
 
 with st.container(border=True):
     st.markdown("### Center Drill / Spot Diameter")
@@ -150,4 +165,3 @@ with st.container(border=True):
             st.write("Formula: depth = C_offset + (target_spot_dia - pilot_dia) / (2 * tan(included_angle / 2))")
             st.write("C offset represents the straight pilot length or the depth offset before the conical section starts.")
             st.write("The target spot diameter is measured at the part face.")
-

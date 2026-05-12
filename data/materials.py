@@ -287,7 +287,7 @@ MILL_MATERIALS = {
 WOODRUFF_KEY_CUTTER_PLACEHOLDER = {
     "sfm": None,
     "ipt": None,
-    "notes": "Placeholder only. No approved Woodruff key cutter baseline is loaded yet. Add shop-approved values in data/materials.py when ready."
+    "notes": "Reference placeholder only. Add a general vendor-verified value before relying on this operation."
 }
 
 for material_data in MILL_MATERIALS.values():
@@ -298,49 +298,49 @@ DRILL_DATA = {
         "HSS": {"sfm": 80, "ipr": 0.0045, "notes": "Standard HSS drill baseline."},
         "HSS Coated": {"sfm": 100, "ipr": 0.0050, "notes": "Coated HSS baseline."},
         "Cobalt": {"sfm": 110, "ipr": 0.0055, "notes": "Cobalt drill baseline."},
-        "CoroDrill": {"sfm": 250, "ipr": 0.0065, "notes": "CoroDrill larger-hole baseline."},
+        "Carbide Drill": {"sfm": 250, "ipr": 0.0065, "notes": "General carbide larger-hole drill baseline."},
     },
     "40 Series Steel": {
         "HSS": {"sfm": 70, "ipr": 0.0040, "notes": "Standard HSS drill baseline."},
         "HSS Coated": {"sfm": 90, "ipr": 0.0045, "notes": "Coated HSS baseline."},
         "Cobalt": {"sfm": 100, "ipr": 0.0050, "notes": "Cobalt drill baseline."},
-        "CoroDrill": {"sfm": 220, "ipr": 0.0060, "notes": "CoroDrill larger-hole baseline."},
+        "Carbide Drill": {"sfm": 220, "ipr": 0.0060, "notes": "General carbide larger-hole drill baseline."},
     },
     "17-4 / 300 Series": {
         "HSS": {"sfm": 30, "ipr": 0.0025, "notes": "Conservative stainless HSS baseline."},
         "HSS Coated": {"sfm": 40, "ipr": 0.0030, "notes": "Coated HSS stainless baseline."},
         "Cobalt": {"sfm": 50, "ipr": 0.0035, "notes": "Cobalt stainless baseline."},
-        "CoroDrill": {"sfm": 140, "ipr": 0.0045, "notes": "CoroDrill stainless baseline."},
+        "Carbide Drill": {"sfm": 140, "ipr": 0.0045, "notes": "General carbide stainless drill baseline."},
     },
     "Duplex / Alloy 20": {
         "HSS": {"sfm": 20, "ipr": 0.0020, "notes": "Conservative duplex/alloy HSS baseline."},
         "HSS Coated": {"sfm": 25, "ipr": 0.0022, "notes": "Coated HSS duplex/alloy baseline."},
         "Cobalt": {"sfm": 35, "ipr": 0.0028, "notes": "Cobalt duplex/alloy baseline."},
-        "CoroDrill": {"sfm": 100, "ipr": 0.0040, "notes": "CoroDrill duplex/alloy baseline."},
+        "Carbide Drill": {"sfm": 100, "ipr": 0.0040, "notes": "General carbide duplex/alloy drill baseline."},
     },
     "Hastelloy": {
         "HSS": {"sfm": 15, "ipr": 0.0015, "notes": "Very conservative Hastelloy HSS baseline."},
         "HSS Coated": {"sfm": 20, "ipr": 0.0018, "notes": "Coated HSS Hastelloy baseline."},
         "Cobalt": {"sfm": 25, "ipr": 0.0022, "notes": "Cobalt Hastelloy baseline."},
-        "CoroDrill": {"sfm": 80, "ipr": 0.0035, "notes": "CoroDrill Hastelloy baseline."},
+        "Carbide Drill": {"sfm": 80, "ipr": 0.0035, "notes": "General carbide high-temp alloy drill baseline."},
     },
     "Titanium": {
         "HSS": {"sfm": 20, "ipr": 0.0018, "notes": "Conservative titanium HSS baseline."},
         "HSS Coated": {"sfm": 25, "ipr": 0.0020, "notes": "Coated HSS titanium baseline."},
         "Cobalt": {"sfm": 30, "ipr": 0.0025, "notes": "Cobalt titanium baseline."},
-        "CoroDrill": {"sfm": 90, "ipr": 0.0038, "notes": "CoroDrill titanium baseline."},
+        "Carbide Drill": {"sfm": 90, "ipr": 0.0038, "notes": "General carbide titanium drill baseline."},
     },
     "Monel": {
         "HSS": {"sfm": 16, "ipr": 0.0015, "notes": "Conservative Monel HSS drill baseline."},
         "HSS Coated": {"sfm": 20, "ipr": 0.0017, "notes": "Coated HSS Monel drill baseline."},
         "Cobalt": {"sfm": 24, "ipr": 0.0020, "notes": "Cobalt Monel drill baseline."},
-        "CoroDrill": {"sfm": 70, "ipr": 0.0032, "notes": "CoroDrill Monel baseline with conservative feed."},
+        "Carbide Drill": {"sfm": 70, "ipr": 0.0032, "notes": "General carbide Monel drill baseline with conservative feed."},
     },
     "Zirconium": {
         "HSS": {"sfm": 12, "ipr": 0.0013, "notes": "Very conservative zirconium HSS drill baseline."},
         "HSS Coated": {"sfm": 16, "ipr": 0.0015, "notes": "Coated HSS zirconium drill baseline."},
         "Cobalt": {"sfm": 20, "ipr": 0.0018, "notes": "Cobalt zirconium drill baseline."},
-        "CoroDrill": {"sfm": 55, "ipr": 0.0028, "notes": "CoroDrill zirconium baseline. Watch heat closely."},
+        "Carbide Drill": {"sfm": 55, "ipr": 0.0028, "notes": "General carbide zirconium drill baseline. Watch heat closely."},
     }
 }
 

@@ -2,7 +2,20 @@ import math
 from fractions import Fraction
 import re
 import streamlit as st
+import pandas as pd
+from data.locknuts import (
+    LOCKNUT_DATA,
+    LOCKNUT_SERIES,
+    LOCKNUT_VERIFICATION_NOTE,
+    get_locknut_entry,
+    get_locknut_series_options,
+    get_locknut_size_options,
+)
 from data.materials import TAP_SFM, OD_THREADING
+from data.general_references import (
+    LOCKNUT_REFERENCE_CATEGORIES,
+    LOCKNUT_WORKFLOW_CHECKS,
+)
 from data.threads_data import METRIC_THREADS, UN_THREADS
 from utils.formulas import rpm_from_sfm, tap_feed_ipm_from_tpi
 from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
@@ -218,185 +231,246 @@ def calculate_od_thread_values(nominal_dia_in: float, pitch_in: float, material:
     }
 
 
-st.markdown("### Quick Thread Input")
 
-c1, c2, c3, c4 = st.columns(4)
+thread_tab, locknut_tab = st.tabs(["Thread Calculator", "Locknut Lookup"])
 
-with c1:
-    callout = st.text_input("Thread Callout", value="1/2-13")
-    st.caption("Examples: 1/2-13, 1/2-13 UNC-2B, 1 1/4-12, M6x1, M10x1.5-6H")
-
-with c2:
-    material = st.selectbox("Material", list(TAP_SFM.keys()))
-
-with c3:
-    thread_type = st.selectbox("Type", ["ID", "OD"])
-
-with c4:
-    thread_percent = st.selectbox("Percent Thread", [65, 70, 75, 80], index=2)
-
-st.markdown("---")
-
-try:
-    thread_data = parse_thread_callout(callout)
-except Exception:
-    st.error("Format must be like: 1/2-13, 1/2-13 UNC-2B, 1 1/4-12, M6x1, or M10x1.5-6H")
-    st.stop()
-
-system = thread_data["system"]
-nominal_dia_in = thread_data["nominal_dia_in"]
-pitch_in = thread_data["pitch_in"]
-pitch_mm = thread_data["pitch_mm"]
-tpi_equiv = thread_data["tpi_equiv"]
-
-if thread_type == "ID":
-    id_values = calculate_id_thread_values(
-        nominal_dia_in=nominal_dia_in,
-        pitch_in=pitch_in,
-        pitch_mm=pitch_mm,
-        tpi_equiv=tpi_equiv,
-        thread_percent=thread_percent,
-        material=material,
-        system=system,
-    )
-
-    if system == "metric":
-        st.code(
-f"""THREAD: {callout}
-TYPE: ID
-SYSTEM: METRIC
-MATERIAL: {material}
-
-NOMINAL DIAMETER: {thread_data["display_nominal"]:.4f} mm
-PITCH: {pitch_mm:.4f} mm
-TPI EQUIVALENT: {tpi_equiv:.4f}
-
-RECOMMENDED DRILL:
-BASIC (100% PITCH RULE): {id_values["recommended_drill_mm_basic"]:.4f} mm   ({id_values["recommended_drill_in_basic"]:.4f} in)
-{thread_percent}% THREAD: {id_values["recommended_drill_mm_percent"]:.4f} mm   ({id_values["recommended_drill_in_percent"]:.4f} in)
-
-TAP SFM: {id_values["tap_sfm"]:.0f}
-TAP RPM: {id_values["tap_rpm"]:.0f}
-TAP FEED: {id_values["tap_feed"]:.6f} IPM
-
-NOTES:
-- BASIC DRILL = NOMINAL - PITCH
-- {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
-- VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
-""",
-            language="text"
+with thread_tab:
+    st.markdown("### Quick Thread Input")
+    
+    c1, c2, c3, c4 = st.columns(4)
+    
+    with c1:
+        callout = st.text_input("Thread Callout", value="1/2-13")
+        st.caption("Examples: 1/2-13, 1/2-13 UNC-2B, 1 1/4-12, M6x1, M10x1.5-6H")
+    
+    with c2:
+        material = st.selectbox("Material", list(TAP_SFM.keys()))
+    
+    with c3:
+        thread_type = st.selectbox("Type", ["ID", "OD"])
+    
+    with c4:
+        thread_percent = st.selectbox("Percent Thread", [65, 70, 75, 80], index=2)
+    
+    st.markdown("---")
+    
+    try:
+        thread_data = parse_thread_callout(callout)
+    except Exception:
+        st.error("Format must be like: 1/2-13, 1/2-13 UNC-2B, 1 1/4-12, M6x1, or M10x1.5-6H")
+        st.stop()
+    
+    system = thread_data["system"]
+    nominal_dia_in = thread_data["nominal_dia_in"]
+    pitch_in = thread_data["pitch_in"]
+    pitch_mm = thread_data["pitch_mm"]
+    tpi_equiv = thread_data["tpi_equiv"]
+    
+    if thread_type == "ID":
+        id_values = calculate_id_thread_values(
+            nominal_dia_in=nominal_dia_in,
+            pitch_in=pitch_in,
+            pitch_mm=pitch_mm,
+            tpi_equiv=tpi_equiv,
+            thread_percent=thread_percent,
+            material=material,
+            system=system,
         )
+    
+        if system == "metric":
+            st.code(
+    f"""THREAD: {callout}
+    TYPE: ID
+    SYSTEM: METRIC
+    MATERIAL: {material}
+    
+    NOMINAL DIAMETER: {thread_data["display_nominal"]:.4f} mm
+    PITCH: {pitch_mm:.4f} mm
+    TPI EQUIVALENT: {tpi_equiv:.4f}
+    
+    RECOMMENDED DRILL:
+    BASIC (100% PITCH RULE): {id_values["recommended_drill_mm_basic"]:.4f} mm   ({id_values["recommended_drill_in_basic"]:.4f} in)
+    {thread_percent}% THREAD: {id_values["recommended_drill_mm_percent"]:.4f} mm   ({id_values["recommended_drill_in_percent"]:.4f} in)
+    
+    TAP SFM: {id_values["tap_sfm"]:.0f}
+    TAP RPM: {id_values["tap_rpm"]:.0f}
+    TAP FEED: {id_values["tap_feed"]:.6f} IPM
+    
+    NOTES:
+    - BASIC DRILL = NOMINAL - PITCH
+    - {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
+    - VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
+    """,
+                language="text"
+            )
+        else:
+            st.code(
+    f"""THREAD: {callout}
+    TYPE: ID
+    SYSTEM: IMPERIAL
+    MATERIAL: {material}
+    
+    NOMINAL DIAMETER: {thread_data["display_nominal"]:.4f} in
+    TPI: {tpi_equiv:.4f}
+    PITCH: {pitch_in:.6f} in   ({pitch_mm:.4f} mm)
+    
+    RECOMMENDED DRILL:
+    BASIC (100% PITCH RULE): {id_values["recommended_drill_in_basic"]:.4f} in   ({id_values["recommended_drill_mm_basic"]:.4f} mm)
+    {thread_percent}% THREAD: {id_values["recommended_drill_in_percent"]:.4f} in   ({id_values["recommended_drill_mm_percent"]:.4f} mm)
+    
+    TAP SFM: {id_values["tap_sfm"]:.0f}
+    TAP RPM: {id_values["tap_rpm"]:.0f}
+    TAP FEED: {id_values["tap_feed"]:.6f} IPM
+    
+    NOTES:
+    - BASIC DRILL = NOMINAL - PITCH
+    - {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
+    - VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
+    """,
+                language="text"
+            )
+    
     else:
-        st.code(
-f"""THREAD: {callout}
-TYPE: ID
-SYSTEM: IMPERIAL
-MATERIAL: {material}
+        od_values = calculate_od_thread_values(
+            nominal_dia_in=nominal_dia_in,
+            pitch_in=pitch_in,
+            material=material,
+        )
+    
+        if system == "metric":
+            st.code(
+    f"""THREAD: {callout}
+    TYPE: OD
+    SYSTEM: METRIC
+    MATERIAL: {material}
+    
+    NOMINAL DIAMETER: {od_values["nominal_dia_mm"]:.4f} mm   ({nominal_dia_in:.4f} in)
+    PITCH: {pitch_mm:.4f} mm
+    TPI EQUIVALENT: {tpi_equiv:.4f}
+    
+    MODEL DIAMETER: {od_values["model_dia_mm"]:.4f} mm   ({od_values["model_dia_in"]:.4f} in)
+    MODEL DROP: {od_values["model_drop_mm"]:.4f} mm   ({od_values["model_drop_in"]:.4f} in)
+    
+    THREAD SFM: {od_values["od_sfm"]:.0f}
+    THREAD LEAD / FEED: {od_values["od_ipr"]:.6f} IPR
+    APPROX RPM: {od_values["od_rpm"]:.0f}
+    
+    NOTES:
+    - MODEL DIA = NOMINAL - (0.07 x PITCH)
+    - OUTPUT MATCHES CURRENT SHOP MEAN-MAJOR APPROXIMATION
+    - THREAD FEED = PITCH IN INCHES PER REV
+    - VERIFY AGAINST PRINT / GAGE WHEN NEEDED
+    """,
+                language="text"
+            )
+    
+            st.markdown("### OD Thread Shop Estimate")
+            e1, e2, e3 = st.columns(3)
+            e1.metric("Pitch", f"{pitch_mm:.4f} mm ({pitch_in:.6f} in)")
+            e2.metric(
+                "Estimated Thread Depth",
+                f"{od_values['estimated_thread_depth_mm']:.4f} mm ({od_values['estimated_thread_depth_in']:.4f} in)"
+            )
+            e3.metric(
+                "Estimated Pass Count (@ .003 radial/pass)",
+                f"~{od_values['estimated_pass_count_rounded']}"
+            )
+    
+            st.caption("Shop estimate only. Final pass count still depends on material, insert, machine, and finish requirement.")
+        else:
+            st.code(
+    f"""THREAD: {callout}
+    TYPE: OD
+    SYSTEM: IMPERIAL
+    MATERIAL: {material}
+    
+    NOMINAL DIAMETER: {nominal_dia_in:.4f} in   ({od_values["nominal_dia_mm"]:.4f} mm)
+    TPI: {tpi_equiv:.4f}
+    PITCH: {pitch_in:.6f} in   ({pitch_mm:.4f} mm)
+    
+    MODEL DIAMETER: {od_values["model_dia_in"]:.4f} in   ({od_values["model_dia_mm"]:.4f} mm)
+    MODEL DROP: {od_values["model_drop_in"]:.4f} in   ({od_values["model_drop_mm"]:.4f} mm)
+    
+    THREAD SFM: {od_values["od_sfm"]:.0f}
+    THREAD LEAD / FEED: {od_values["od_ipr"]:.6f} IPR
+    APPROX RPM: {od_values["od_rpm"]:.0f}
+    
+    NOTES:
+    - MODEL DIA = NOMINAL - (0.07 x PITCH)
+    - OUTPUT MATCHES CURRENT SHOP MEAN-MAJOR APPROXIMATION
+    - THREAD FEED = 1 / TPI
+    - VERIFY AGAINST PRINT / GAGE WHEN NEEDED
+    """,
+                language="text"
+            )
+    
+            st.markdown("### OD Thread Shop Estimate")
+            e1, e2, e3 = st.columns(3)
+            e1.metric("Pitch", f"{pitch_in:.6f} in ({pitch_mm:.4f} mm)")
+            e2.metric(
+                "Estimated Thread Depth",
+                f"{od_values['estimated_thread_depth_in']:.4f} in ({od_values['estimated_thread_depth_mm']:.4f} mm)"
+            )
+            e3.metric(
+                "Estimated Pass Count (@ .003 radial/pass)",
+                f"~{od_values['estimated_pass_count_rounded']}"
+            )
+    
+            st.caption("Shop estimate only. Final pass count still depends on material, insert, machine, and finish requirement.")
 
-NOMINAL DIAMETER: {thread_data["display_nominal"]:.4f} in
-TPI: {tpi_equiv:.4f}
-PITCH: {pitch_in:.6f} in   ({pitch_mm:.4f} mm)
+with locknut_tab:
+    st.subheader("Locknut Lookup")
+    st.caption("Reference-only bearing nut and locknut lookup for thread, washer/locking device, and programming checks.")
+    st.info(LOCKNUT_VERIFICATION_NOTE)
 
-RECOMMENDED DRILL:
-BASIC (100% PITCH RULE): {id_values["recommended_drill_in_basic"]:.4f} in   ({id_values["recommended_drill_mm_basic"]:.4f} mm)
-{thread_percent}% THREAD: {id_values["recommended_drill_in_percent"]:.4f} in   ({id_values["recommended_drill_mm_percent"]:.4f} mm)
-
-TAP SFM: {id_values["tap_sfm"]:.0f}
-TAP RPM: {id_values["tap_rpm"]:.0f}
-TAP FEED: {id_values["tap_feed"]:.6f} IPM
-
-NOTES:
-- BASIC DRILL = NOMINAL - PITCH
-- {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
-- VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
-""",
-            language="text"
+    lookup_col1, lookup_col2 = st.columns(2)
+    with lookup_col1:
+        locknut_series = st.selectbox(
+            "Locknut Series / Type",
+            get_locknut_series_options(),
+            format_func=lambda option: LOCKNUT_SERIES[option]["label"],
+            key="locknut_lookup_series",
+        )
+    with lookup_col2:
+        locknut_designation = st.selectbox(
+            "Size / Designation",
+            get_locknut_size_options(locknut_series),
+            key="locknut_lookup_designation",
         )
 
-else:
-    od_values = calculate_od_thread_values(
-        nominal_dia_in=nominal_dia_in,
-        pitch_in=pitch_in,
-        material=material,
-    )
+    locknut_entry = get_locknut_entry(locknut_series, locknut_designation)
+    series_info = LOCKNUT_SERIES[locknut_series]
 
-    if system == "metric":
-        st.code(
-f"""THREAD: {callout}
-TYPE: OD
-SYSTEM: METRIC
-MATERIAL: {material}
+    st.markdown("### Selected Locknut")
+    info_col1, info_col2, info_col3 = st.columns(3)
+    info_col1.metric("Designation", locknut_entry["designation"])
+    info_col2.metric("Thread", locknut_entry["thread"])
+    info_col3.metric("Pitch / TPI", locknut_entry["pitch_tpi"])
 
-NOMINAL DIAMETER: {od_values["nominal_dia_mm"]:.4f} mm   ({nominal_dia_in:.4f} in)
-PITCH: {pitch_mm:.4f} mm
-TPI EQUIVALENT: {tpi_equiv:.4f}
+    detail_col1, detail_col2 = st.columns(2)
+    with detail_col1:
+        st.write(f"**Series:** {series_info['label']}")
+        st.write(f"**Series Use:** {series_info['description']}")
+        st.write(f"**Standard / Spec Reference:** {locknut_entry['standard_reference']}")
+        st.write(f"**Matching Lock / Washer:** {locknut_entry['matching_lock']}")
+        st.write(f"**Bearing Bore / Guide Size:** {locknut_entry['bearing_bore']}")
+    with detail_col2:
+        st.write(f"**Major Diameter Reference:** {locknut_entry['major_diameter_reference']}")
+        st.write(f"**Shaft Reference:** {locknut_entry['shaft_diameter_reference']}")
+        st.write(f"**OD Reference:** {locknut_entry['od_reference']}")
+        st.write(f"**Thickness Reference:** {locknut_entry['thickness_reference']}")
+        st.write(f"**Keyway / Spanner:** {locknut_entry['keyway_spanner_reference']}")
+        st.write(f"**Needs Review:** {locknut_entry['needs_review']}")
 
-MODEL DIAMETER: {od_values["model_dia_mm"]:.4f} mm   ({od_values["model_dia_in"]:.4f} in)
-MODEL DROP: {od_values["model_drop_mm"]:.4f} mm   ({od_values["model_drop_in"]:.4f} in)
+    st.markdown("### Data Source / Verification")
+    st.write(f"**Source Family:** {locknut_entry['source_family']}")
+    st.write(f"**Source Note:** {locknut_entry['source_note']}")
+    st.write(f"**Verification:** {locknut_entry['verification_note']}")
+    st.write(f"**Machining / Programming Notes:** {locknut_entry['programming_notes']}")
 
-THREAD SFM: {od_values["od_sfm"]:.0f}
-THREAD LEAD / FEED: {od_values["od_ipr"]:.6f} IPR
-APPROX RPM: {od_values["od_rpm"]:.0f}
+    with st.expander("Series table", expanded=False):
+        st.dataframe(pd.DataFrame(LOCKNUT_DATA[locknut_series]), use_container_width=True, hide_index=True)
 
-NOTES:
-- MODEL DIA = NOMINAL - (0.07 x PITCH)
-- OUTPUT MATCHES CURRENT SHOP MEAN-MAJOR APPROXIMATION
-- THREAD FEED = PITCH IN INCHES PER REV
-- VERIFY AGAINST PRINT / GAGE WHEN NEEDED
-""",
-            language="text"
-        )
-
-        st.markdown("### OD Thread Shop Estimate")
-        e1, e2, e3 = st.columns(3)
-        e1.metric("Pitch", f"{pitch_mm:.4f} mm ({pitch_in:.6f} in)")
-        e2.metric(
-            "Estimated Thread Depth",
-            f"{od_values['estimated_thread_depth_mm']:.4f} mm ({od_values['estimated_thread_depth_in']:.4f} in)"
-        )
-        e3.metric(
-            "Estimated Pass Count (@ .003 radial/pass)",
-            f"~{od_values['estimated_pass_count_rounded']}"
-        )
-
-        st.caption("Shop estimate only. Final pass count still depends on material, insert, machine, and finish requirement.")
-    else:
-        st.code(
-f"""THREAD: {callout}
-TYPE: OD
-SYSTEM: IMPERIAL
-MATERIAL: {material}
-
-NOMINAL DIAMETER: {nominal_dia_in:.4f} in   ({od_values["nominal_dia_mm"]:.4f} mm)
-TPI: {tpi_equiv:.4f}
-PITCH: {pitch_in:.6f} in   ({pitch_mm:.4f} mm)
-
-MODEL DIAMETER: {od_values["model_dia_in"]:.4f} in   ({od_values["model_dia_mm"]:.4f} mm)
-MODEL DROP: {od_values["model_drop_in"]:.4f} in   ({od_values["model_drop_mm"]:.4f} mm)
-
-THREAD SFM: {od_values["od_sfm"]:.0f}
-THREAD LEAD / FEED: {od_values["od_ipr"]:.6f} IPR
-APPROX RPM: {od_values["od_rpm"]:.0f}
-
-NOTES:
-- MODEL DIA = NOMINAL - (0.07 x PITCH)
-- OUTPUT MATCHES CURRENT SHOP MEAN-MAJOR APPROXIMATION
-- THREAD FEED = 1 / TPI
-- VERIFY AGAINST PRINT / GAGE WHEN NEEDED
-""",
-            language="text"
-        )
-
-        st.markdown("### OD Thread Shop Estimate")
-        e1, e2, e3 = st.columns(3)
-        e1.metric("Pitch", f"{pitch_in:.6f} in ({pitch_mm:.4f} mm)")
-        e2.metric(
-            "Estimated Thread Depth",
-            f"{od_values['estimated_thread_depth_in']:.4f} in ({od_values['estimated_thread_depth_mm']:.4f} mm)"
-        )
-        e3.metric(
-            "Estimated Pass Count (@ .003 radial/pass)",
-            f"~{od_values['estimated_pass_count_rounded']}"
-        )
-
-        st.caption("Shop estimate only. Final pass count still depends on material, insert, machine, and finish requirement.")
+    with st.expander("General locknut selection checks", expanded=False):
+        st.dataframe(pd.DataFrame(LOCKNUT_WORKFLOW_CHECKS), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(LOCKNUT_REFERENCE_CATEGORIES), use_container_width=True, hide_index=True)
