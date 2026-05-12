@@ -1,11 +1,37 @@
 from data import general_references as refs
 from data.center_drills import CENTER_DRILL_PRESETS
 from data.locknuts import (
+    BEARING_LOCKNUT_FAMILY_GUIDE,
     LOCKNUT_DATA,
+    LOCKNUT_VERIFICATION_NOTE,
     REQUIRED_LOCKNUT_FIELDS,
     get_locknut_entry,
     get_locknut_series_options,
     get_locknut_size_options,
+)
+
+
+LOCKNUT_VISIBLE_FIELDS = (
+    "designation",
+    "series",
+    "thread",
+    "pitch_tpi",
+    "matching_lock",
+    "bearing_bore",
+    "shaft_diameter_reference",
+    "major_diameter_reference",
+    "source_family",
+    "source_note",
+    "programming_notes",
+)
+
+LOCKNUT_PLACEHOLDER_TEXT = (
+    "catalog lookup required",
+    "tbd",
+    "unknown",
+    "placeholder",
+    "manufacturer_catalog_required",
+    "verification_required",
 )
 
 
@@ -55,17 +81,29 @@ def test_locknut_references_are_marked_catalog_reference_only():
 
 
 def test_locknut_lookup_data_loads_required_series_and_sizes():
-    assert set(get_locknut_series_options()) >= {"KM", "AN", "N", "Bearing locknut"}
+    assert set(get_locknut_series_options()) == {"KM", "AN", "N"}
+    assert get_locknut_series_options() == ["KM", "AN", "N"]
+    assert "Bearing locknut" not in get_locknut_series_options()
     assert {"KM0", "KM10"}.issubset(set(get_locknut_size_options("KM")))
     assert {"AN 15", "AN 40"}.issubset(set(get_locknut_size_options("AN")))
     assert {"N 07", "N 14"}.issubset(set(get_locknut_size_options("N")))
+
+
+def test_bearing_locknut_family_guide_is_not_selectable_lookup_data():
+    assert BEARING_LOCKNUT_FAMILY_GUIDE
+    assert "Bearing locknut" not in LOCKNUT_DATA
     assert {
-        "KM / KML metric",
-        "N inch",
-        "AN inch",
-        "HM / HME metric",
-        "Integral-locking",
-    }.issubset(set(get_locknut_size_options("Bearing locknut")))
+        "KM / KML metric bearing locknuts",
+        "N inch bearing locknuts",
+        "AN inch bearing locknuts",
+        "HM / HME larger metric bearing locknuts",
+        "Integral-locking locknuts",
+    }.issubset({row["Family"] for row in BEARING_LOCKNUT_FAMILY_GUIDE})
+
+    for row in BEARING_LOCKNUT_FAMILY_GUIDE:
+        assert "not a dimensional lookup" in row["Guide note"]
+        assert row["Catalog family to check"]
+        assert row["What to verify"]
 
 
 def test_locknut_size_lookup_returns_required_fields_and_verification_notes():
@@ -78,6 +116,10 @@ def test_locknut_size_lookup_returns_required_fields_and_verification_notes():
     assert km_entry["thread_size"] == "M25"
     assert km_entry["pitch_tpi"] == "1.5 mm"
     assert "SKF" in km_entry["verification_note"]
+    assert LOCKNUT_VERIFICATION_NOTE == (
+        "Verify final dimensions, thread, washer, and spanner details with SKF, Timken, "
+        "Whittet-Higgins, or the locknut manufacturer before machining."
+    )
     assert km_entry["verification_required"] is True
     assert km_entry["manufacturer_catalog_required"] is True
 
@@ -102,5 +144,19 @@ def test_locknut_size_lookup_returns_required_fields_and_verification_notes():
             assert row["verification_note"]
             assert row["verification_required"] is True
             assert row["manufacturer_catalog_required"] is True
-            assert "current catalog before machining" in row["verification_note"]
             assert "final production dimensions" not in row["source_note"].lower()
+
+
+def test_visible_locknut_fields_do_not_contain_placeholder_text():
+    for rows in LOCKNUT_DATA.values():
+        for row in rows:
+            for field in LOCKNUT_VISIBLE_FIELDS:
+                value = str(row.get(field, "")).lower()
+                assert all(placeholder not in value for placeholder in LOCKNUT_PLACEHOLDER_TEXT)
+
+            assert row["designation"]
+            assert row["thread"]
+            assert row["pitch_tpi"]
+            assert row["matching_lock"]
+            assert row["source_family"]
+            assert row["programming_notes"]

@@ -4,6 +4,7 @@ import re
 import streamlit as st
 import pandas as pd
 from data.locknuts import (
+    BEARING_LOCKNUT_FAMILY_GUIDE,
     LOCKNUT_DATA,
     LOCKNUT_SERIES,
     LOCKNUT_VERIFICATION_NOTE,
@@ -47,6 +48,49 @@ st.title("Threads")
 st.caption("General thread, tap drill, and modeling reference. Verify final values against the print, gage, and applicable standards.")
 
 THREAD_SERIES_SUFFIXES = ("UNC", "UNF", "UNEF", "UN", "UNS")
+
+LOCKNUT_PLACEHOLDER_PATTERNS = (
+    "catalog lookup required",
+    "unknown",
+    "tbd",
+    "placeholder",
+)
+
+
+def has_useful_locknut_value(value) -> bool:
+    if value is None:
+        return False
+    text = str(value).strip()
+    if not text:
+        return False
+    return not any(pattern in text.lower() for pattern in LOCKNUT_PLACEHOLDER_PATTERNS)
+
+
+def write_locknut_field(label: str, value) -> None:
+    if has_useful_locknut_value(value):
+        st.write(f"**{label}:** {value}")
+
+
+def build_visible_locknut_table(rows: list[dict]) -> pd.DataFrame:
+    visible_columns = [
+        ("designation", "Designation"),
+        ("thread", "Thread"),
+        ("pitch_tpi", "Pitch / TPI"),
+        ("bearing_bore", "Bearing Bore"),
+        ("shaft_diameter_reference", "Shaft Reference"),
+        ("major_diameter_reference", "Major Diameter"),
+        ("matching_lock", "Washer / Lock"),
+        ("source_family", "Source Family"),
+    ]
+    display_rows = []
+    for row in rows:
+        display_row = {
+            heading: row[key]
+            for key, heading in visible_columns
+            if has_useful_locknut_value(row.get(key))
+        }
+        display_rows.append(display_row)
+    return pd.DataFrame(display_rows)
 
 
 def apply_cut_mode(value, kind="sfm"):
@@ -420,7 +464,7 @@ with thread_tab:
 
 with locknut_tab:
     st.subheader("Locknut Lookup")
-    st.caption("Reference-only bearing nut and locknut lookup for thread, washer/locking device, and programming checks.")
+    st.caption("Bearing nut and locknut lookup for thread, washer/locking device, and programming checks.")
     st.info(LOCKNUT_VERIFICATION_NOTE)
 
     lookup_col1, lookup_col2 = st.columns(2)
@@ -449,28 +493,27 @@ with locknut_tab:
 
     detail_col1, detail_col2 = st.columns(2)
     with detail_col1:
-        st.write(f"**Series:** {series_info['label']}")
-        st.write(f"**Series Use:** {series_info['description']}")
-        st.write(f"**Standard / Spec Reference:** {locknut_entry['standard_reference']}")
-        st.write(f"**Matching Lock / Washer:** {locknut_entry['matching_lock']}")
-        st.write(f"**Bearing Bore / Guide Size:** {locknut_entry['bearing_bore']}")
+        write_locknut_field("Series", series_info["label"])
+        write_locknut_field("Series Use", series_info["description"])
+        write_locknut_field("Matching Lock / Washer", locknut_entry.get("matching_lock"))
+        write_locknut_field("Bearing Bore", locknut_entry.get("bearing_bore"))
     with detail_col2:
-        st.write(f"**Major Diameter Reference:** {locknut_entry['major_diameter_reference']}")
-        st.write(f"**Shaft Reference:** {locknut_entry['shaft_diameter_reference']}")
-        st.write(f"**OD Reference:** {locknut_entry['od_reference']}")
-        st.write(f"**Thickness Reference:** {locknut_entry['thickness_reference']}")
-        st.write(f"**Keyway / Spanner:** {locknut_entry['keyway_spanner_reference']}")
-        st.write(f"**Needs Review:** {locknut_entry['needs_review']}")
+        write_locknut_field("Major Diameter", locknut_entry.get("major_diameter_reference"))
+        write_locknut_field("Shaft Reference", locknut_entry.get("shaft_diameter_reference"))
+        write_locknut_field("Keyway / Spanner", locknut_entry.get("keyway_spanner_reference"))
 
-    st.markdown("### Data Source / Verification")
-    st.write(f"**Source Family:** {locknut_entry['source_family']}")
-    st.write(f"**Source Note:** {locknut_entry['source_note']}")
-    st.write(f"**Verification:** {locknut_entry['verification_note']}")
-    st.write(f"**Machining / Programming Notes:** {locknut_entry['programming_notes']}")
+    st.markdown("### Source / Notes")
+    write_locknut_field("Source Family", locknut_entry.get("source_family"))
+    write_locknut_field("Source Note", locknut_entry.get("source_note"))
+    write_locknut_field("Machining / Programming Notes", locknut_entry.get("programming_notes"))
 
     with st.expander("Series table", expanded=False):
-        st.dataframe(pd.DataFrame(LOCKNUT_DATA[locknut_series]), use_container_width=True, hide_index=True)
+        st.dataframe(build_visible_locknut_table(LOCKNUT_DATA[locknut_series]), use_container_width=True, hide_index=True)
 
     with st.expander("General locknut selection checks", expanded=False):
         st.dataframe(pd.DataFrame(LOCKNUT_WORKFLOW_CHECKS), use_container_width=True, hide_index=True)
         st.dataframe(pd.DataFrame(LOCKNUT_REFERENCE_CATEGORIES), use_container_width=True, hide_index=True)
+
+    with st.expander("Bearing Locknut Family Guide", expanded=False):
+        st.caption("Guide only. This section is not a dimensional lookup; use the selected KM, AN, or N lookup rows or the current manufacturer catalog for size-specific data.")
+        st.dataframe(pd.DataFrame(BEARING_LOCKNUT_FAMILY_GUIDE), use_container_width=True, hide_index=True)
