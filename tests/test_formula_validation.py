@@ -64,6 +64,9 @@ def load_thread_helpers():
             "build_metric_thread_data",
             "build_imperial_thread_data",
             "parse_thread_callout",
+            "extract_thread_fit",
+            "format_thread_dimension",
+            "build_thread_detail_rows",
             "tap_feed_ipm_from_metric_pitch",
             "calculate_id_thread_values",
             "calculate_od_thread_values",
@@ -204,6 +207,14 @@ def test_thread_parser_imperial_fractional_case():
     assert data["tpi_equiv"] == pytest.approx(13)
 
 
+def test_speeds_feeds_page_no_longer_contains_quick_tools_shortcuts():
+    source = (ROOT / "pages" / "1_Speeds_Feeds.py").read_text(encoding="utf-8")
+
+    assert "Quick Tools" not in source
+    assert "Math Workbench" not in source
+    assert "G/M Codes & References" not in source
+
+
 def test_thread_parser_metric_case_and_tap_feed():
     helpers = load_thread_helpers()
 
@@ -215,6 +226,31 @@ def test_thread_parser_metric_case_and_tap_feed():
     assert data["pitch_in"] == pytest.approx(1.5 / 25.4)
     assert data["tpi_equiv"] == pytest.approx(25.4 / 1.5)
     assert feed == pytest.approx(1000 * (1.5 / 25.4))
+
+
+def test_thread_fit_extraction_only_returns_explicit_callout_fit():
+    helpers = load_thread_helpers()
+
+    assert helpers["extract_thread_fit"]("1/2-13 UNC-2B") == "2B"
+    assert helpers["extract_thread_fit"]("M10x1.5-6H") == "6H"
+    assert helpers["extract_thread_fit"]("M25x1.5") is None
+
+
+def test_locknut_thread_detail_rows_use_thread_calculator_helpers():
+    helpers = load_thread_helpers()
+
+    data = helpers["parse_thread_callout"]("M25x1.5")
+    rows = helpers["build_thread_detail_rows"]("M25x1.5", data)
+    row_map = {row["Detail"]: row["Value"] for row in rows}
+
+    assert row_map["Pitch"] == "1.5000 mm"
+    assert row_map["TPI"] == f"{25.4 / 1.5:.4f} equivalent"
+    assert row_map["Major diameter"] == "25.0000 mm (0.9843 in)"
+    assert row_map["Pitch diameter"] == "Not available in loaded public locknut lookup"
+    assert row_map["Minor diameter"] == "Not available in loaded public locknut lookup"
+    assert row_map["Tap drill / minor reference"] == "23.5000 mm (0.9252 in)"
+    assert row_map["OD model diameter"] == "24.8950 mm (0.9801 in)"
+    assert row_map["Class / fit"] == "Not available in selected locknut thread callout"
 
 
 def test_id_thread_drill_percent_calculation_uses_pitch_rule():

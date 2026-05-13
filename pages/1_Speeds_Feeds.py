@@ -22,24 +22,6 @@ st.markdown("""
     padding-bottom: 1.2rem;
 }
 
-.workbench-drawer {
-    border: 1px solid rgba(250,250,250,0.12);
-    border-radius: 8px;
-    padding: 14px 16px 12px 16px;
-    background: rgba(255,255,255,0.025);
-    margin: 0.45rem 0 0.85rem 0;
-}
-
-.drawer-title {
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-}
-
-.drawer-text {
-    font-size: 0.9rem;
-    opacity: 0.86;
-    line-height: 1.35;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -48,25 +30,6 @@ render_cutting_mode_sidebar()
 
 st.title("Speeds & Feeds")
 st.caption("General reference starting values. Verify with tool vendor data, machine condition, setup, and material.")
-
-st.markdown(
-    """
-<div class="workbench-drawer">
-    <div class="drawer-title">Quick Tools</div>
-    <div class="drawer-text">
-        Jump to broad work areas while you are working through cutting data.
-    </div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
-quick_col1, quick_col2 = st.columns(2)
-with quick_col1:
-    if st.button("Math Workbench", use_container_width=True):
-        st.switch_page("pages/3_Calculators.py")
-with quick_col2:
-    if st.button("G/M Codes & References", use_container_width=True):
-        st.switch_page("pages/6_G_M_Codes.py")
 
 
 def apply_cut_mode(value, kind="sfm"):
