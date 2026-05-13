@@ -122,8 +122,6 @@ with tab_holemaking:
 
     with st.expander("Countersink / chamfer terminology", expanded=False):
         st.dataframe(pd.DataFrame(COUNTERSINK_CHAMFER_REFERENCES), use_container_width=True, hide_index=True)
-        if st.button("Open Spot Drill & Hole Chamfer", use_container_width=True):
-            st.switch_page("pages/4_Chamfer_Calculator.py")
 
     with st.expander("Drill depth and chip evacuation", expanded=False):
         st.dataframe(pd.DataFrame(DRILLING_GUIDELINES), use_container_width=True, hide_index=True)

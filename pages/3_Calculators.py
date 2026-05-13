@@ -131,28 +131,6 @@ header[data-testid="stHeader"] {
     opacity: 0.86;
     line-height: 1.32;
 }
-
-.calculator-link-card {
-    border: 1px solid rgba(88, 173, 255, 0.16);
-    border-radius: 8px;
-    padding: 14px 15px 13px;
-    background: linear-gradient(180deg, rgba(18, 38, 58, 0.58), rgba(7, 14, 23, 0.76));
-    min-height: 104px;
-    margin-bottom: 0.45rem;
-}
-
-.calculator-link-icon {
-    align-items: center;
-    background: rgba(58, 157, 255, 0.11);
-    border: 1px solid rgba(89, 184, 255, 0.18);
-    border-radius: 8px;
-    display: inline-flex;
-    font-size: 1.2rem;
-    height: 34px;
-    justify-content: center;
-    margin-bottom: 0.55rem;
-    width: 34px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -171,37 +149,6 @@ Choose a category to work directly in the matching shop math calculators.
 """,
     unsafe_allow_html=True,
 )
-
-st.markdown("### Dedicated Holemaking Calculators")
-calc_link_col1, calc_link_col2 = st.columns(2)
-
-with calc_link_col1:
-    st.markdown(
-        """
-<div class="calculator-link-card">
-    <div class="calculator-link-icon">◺</div>
-    <div class="compact-tool-title">Chamfer Calculator</div>
-    <div class="compact-tool-text">Focused spot drill, countersink, and hole chamfer depth workflow.</div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Open Chamfer Calculator", use_container_width=True):
-        st.switch_page("pages/4_Chamfer_Calculator.py")
-
-with calc_link_col2:
-    st.markdown(
-        """
-<div class="calculator-link-card">
-    <div class="calculator-link-icon">🎯</div>
-    <div class="compact-tool-title">Center Drill Calculator</div>
-    <div class="compact-tool-text">Focused center or spot diameter depth workflow from pilot and included angle.</div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Open Center Drill Calculator", use_container_width=True):
-        st.switch_page("pages/5_Center_Drill_Calculator.py")
 
 section_holemaking, section_geometry, section_conversions = st.tabs(
     ["Holemaking Math", "Geometry Math", "Conversions"]
