@@ -1,11 +1,12 @@
 import streamlit as st
 
 from utils.holemaking import chamfer_depth_from_diameters, chamfer_width_from_depth
-from utils.ui_helpers import render_sidebar_nav
+from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav
 
 
 st.set_page_config(
-    page_title="CutWise | Spot Drill & Hole Chamfer",
+    page_title="ArcWise | Spot Drill & Hole Chamfer",
+    page_icon=str(get_arcwise_logo_path()) if get_arcwise_logo_path() else None,
     layout="wide",
     initial_sidebar_state="expanded",
 )

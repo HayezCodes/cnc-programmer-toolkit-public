@@ -3,10 +3,11 @@ from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label
 from data.materials import LATHE_MATERIALS, MILL_MATERIALS, DRILL_DATA, OPERATOR_NOTES
 from data.woodruff_reference import build_woodruff_reference, WOODRUFF_SOURCE_TYPES
 from utils.formulas import rpm_from_sfm, ipm_from_ipr, drill_feed_ipm, tap_feed_ipm_from_tpi
-from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
+from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
-    page_title="CutWise | Speeds & Feeds",
+    page_title="ArcWise | Speeds & Feeds",
+    page_icon=str(get_arcwise_logo_path()) if get_arcwise_logo_path() else None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -220,7 +221,7 @@ def sync_woodruff_reference_state(reference_data: dict):
 st.markdown("### Diameter Units")
 unit_mode = st.radio("Use diameter-style inputs in:", ["STANDARD", "METRIC"], horizontal=True, key="speeds_feeds_unit_mode")
 
-main_tab1, main_tab2, main_tab3 = st.tabs(["Lathe", "Mill", "Threading"])
+main_tab1, main_tab2 = st.tabs(["Lathe", "Mill"])
 
 with main_tab1:
     lathe_tab1, lathe_tab2, lathe_tab3, lathe_tab4 = st.tabs(["Turning", "Drilling", "Live Tooling Endmill", "Live Tooling Drill"])
@@ -615,24 +616,3 @@ with main_tab2:
             )
 
         render_operator_notes(material_mill)
-
-with main_tab3:
-    st.subheader("Threading")
-    st.write(
-        "Thread feed, tap drill, and OD model values are part of the same programming workflow. "
-        "Open the full thread worksheet when the operation moves from cutting data into thread geometry."
-    )
-
-    thread_col1, thread_col2, thread_col3 = st.columns(3)
-    with thread_col1:
-        st.markdown("**ID Threads / Tapping**")
-        st.write("Tap feed, thread percent drill estimates, and metric or imperial callout parsing.")
-    with thread_col2:
-        st.markdown("**OD Threading**")
-        st.write("Model diameter, depth estimate, pass count reference, RPM, and IPR feed.")
-    with thread_col3:
-        st.markdown("**Use With Speeds & Feeds**")
-        st.write("Use this after choosing material and operation style, then verify against print and gage requirements.")
-
-    if st.button("Open Full Threads Worksheet", use_container_width=True):
-        st.switch_page("pages/2_Threads.py")

@@ -1,4 +1,4 @@
-# CutWise Public Roadmap
+# ArcWise Public Roadmap
 
 This repository is a copied working folder that is being turned into a new, separate public GitHub repository named `cnc-programmer-toolkit-public`.
 
@@ -6,7 +6,7 @@ The old/internal GitHub remote has been removed. Do not add a new remote or push
 
 ## Goal
 
-Create a polished public CutWise app for machinists and CNC programmers while preserving useful general machining tools and removing or separating private/internal content.
+Create a polished public ArcWise app for machinists and CNC programmers while preserving useful general machining tools and removing or separating private/internal content.
 
 The public version should be:
 
@@ -108,7 +108,7 @@ Private-only content should be moved out of the public repo or ignored before re
 
 ### Phase 3: Public Branding And Navigation
 
-- Replace private branding with `CutWise`.
+- Replace private branding with `ArcWise`.
 - Remove logo and company-specific captions.
 - Remove or rename pages that expose private content.
 - Keep the app layout consistent and uncluttered.

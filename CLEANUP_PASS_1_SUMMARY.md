@@ -48,7 +48,7 @@ Why: contained job number, drawing number, customer, programmer, private job-fol
 - `docs/prompts/inbox/example.md`
 - `docs/prompts/master_prompt.txt`
 
-Why: internal prompt bridge workflow, not part of the public CutWise app.
+Why: internal prompt bridge workflow, not part of the public ArcWise app.
 
 ### Private Branding And Private Path Script
 

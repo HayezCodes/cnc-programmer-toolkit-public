@@ -1,6 +1,6 @@
-# CutWise
+# ArcWise
 
-CutWise is a Streamlit-based reference app for CNC programmers to quickly calculate speeds, feeds, threads, and machining geometry.
+ArcWise is a Streamlit-based reference app for CNC programmers to quickly calculate speeds, feeds, threads, and machining geometry.
 
 ## Features
 - Speeds & Feeds (Lathe + Mill)

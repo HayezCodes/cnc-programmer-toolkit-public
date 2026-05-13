@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make CutWise feel like a connected programming workbench instead of a set of unrelated pages.
+Make ArcWise feel like a connected programming workbench instead of a set of unrelated pages.
 
 ## Primary Navigation
 

@@ -20,10 +20,11 @@ from data.general_references import (
     THREAD_CLASS_REFERENCES,
     TOOLHOLDER_SHORTHAND,
 )
-from utils.ui_helpers import render_sidebar_nav
+from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav
 
 st.set_page_config(
-    page_title="CutWise | G & M Codes",
+    page_title="ArcWise | G & M Codes",
+    page_icon=str(get_arcwise_logo_path()) if get_arcwise_logo_path() else None,
     layout="wide",
     initial_sidebar_state="expanded"
 )

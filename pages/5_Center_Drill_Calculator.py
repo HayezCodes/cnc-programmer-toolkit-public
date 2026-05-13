@@ -2,11 +2,12 @@ import streamlit as st
 
 from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label, get_center_drill_options
 from utils.holemaking import center_drill_diameter_at_depth, center_drill_total_depth_for_target
-from utils.ui_helpers import render_sidebar_nav
+from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav
 
 
 st.set_page_config(
-    page_title="CutWise | Center Drill Calculator",
+    page_title="ArcWise | Center Drill Calculator",
+    page_icon=str(get_arcwise_logo_path()) if get_arcwise_logo_path() else None,
     layout="wide",
     initial_sidebar_state="expanded",
 )

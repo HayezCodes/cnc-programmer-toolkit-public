@@ -2,7 +2,7 @@
 
 ## Scope
 
-Verification pass for the public CutWise calculator logic and machining formulas. This review focused on calculator correctness, public safety, and regression coverage without changing app behavior.
+Verification pass for the public ArcWise calculator logic and machining formulas. This review focused on calculator correctness, public safety, and regression coverage without changing app behavior.
 
 Agents applied:
 

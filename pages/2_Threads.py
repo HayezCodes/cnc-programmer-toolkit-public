@@ -19,10 +19,11 @@ from data.general_references import (
 )
 from data.threads_data import METRIC_THREADS, UN_THREADS
 from utils.formulas import rpm_from_sfm, tap_feed_ipm_from_tpi
-from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
+from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
-    page_title="CutWise | Threads",
+    page_title="ArcWise | Threads",
+    page_icon=str(get_arcwise_logo_path()) if get_arcwise_logo_path() else None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
