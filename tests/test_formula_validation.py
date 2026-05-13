@@ -67,8 +67,7 @@ def load_thread_helpers():
             "parse_thread_callout",
             "extract_thread_fit",
             "format_thread_dimension",
-            "locknut_detail_value",
-            "build_locknut_thread_detail_block",
+            "build_locknut_od_thread_calculation_block",
             "tap_feed_ipm_from_metric_pitch",
             "calculate_id_thread_values",
             "calculate_od_thread_values",
@@ -244,37 +243,37 @@ def test_thread_fit_extraction_only_returns_explicit_callout_fit():
     assert helpers["extract_thread_fit"]("M25x1.5") is None
 
 
-def test_locknut_thread_detail_block_matches_thread_calculator_style_output():
+def test_locknut_od_thread_calculation_block_matches_thread_calculator_output():
     helpers = load_thread_helpers()
 
     data = helpers["parse_thread_callout"]("M25x1.5")
-    block = helpers["build_locknut_thread_detail_block"](
+    block = helpers["build_locknut_od_thread_calculation_block"](
         {
             "designation": "KM5",
             "thread": "M25x1.5",
             "matching_lock": "MB5 tab washer where applicable",
             "keyway_spanner_reference": "Requires shaft/sleeve keyway for tab washer.",
         },
-        {"label": "KM locknuts"},
         data,
+        "10 Series Steel",
     )
 
     assert "THREAD: M25x1.5" in block
-    assert "TYPE: OD / EXTERNAL LOCKNUT THREAD" in block
+    assert "TYPE: OD" in block
     assert "SYSTEM: METRIC" in block
-    assert "DESIGNATION / LOCKNUT SIZE: KM5" in block
-    assert "NOMINAL / MAJOR DIAMETER: 25.0000 mm (0.9843 in)" in block
+    assert "MATERIAL: 10 Series Steel" in block
+    assert "NOMINAL DIAMETER: 25.0000 mm   (0.9843 in)" in block
     assert "PITCH: 1.5000 mm" in block
-    assert f"TPI: {25.4 / 1.5:.4f} equivalent" in block
-    assert "CLASS / FIT: NOT AVAILABLE IN SELECTED LOCKNUT CALLOUT." in block
-    assert "PITCH DIAMETER ESTIMATE:" in block
-    assert "THREAD CALCULATOR OD MODEL: 24.8950 mm (0.9801 in)" in block
-    assert "MINOR DIAMETER ESTIMATE:" in block
-    assert "BASIC (100% PITCH RULE): 23.5000 mm (0.9252 in)" in block
-    assert "75% THREAD DRILL ESTIMATE: 23.8750 mm (0.9400 in)" in block
-    assert "MATCHING LOCK / WASHER: MB5 tab washer where applicable" in block
-    assert "KEYWAY / SPANNER: Requires shaft/sleeve keyway for tab washer." in block
-    assert "VERIFY FINAL DIMENSIONS AGAINST CATALOG / PRINT / GAGE / APPLICABLE STANDARD" in block
+    assert f"TPI EQUIVALENT: {25.4 / 1.5:.4f}" in block
+    assert "MODEL DIAMETER: 24.8950 mm   (0.9801 in)" in block
+    assert "MODEL DROP: 0.1050 mm   (0.0041 in)" in block
+    assert "THREAD SFM:" in block
+    assert "THREAD LEAD / FEED: 0.059055 IPR" in block
+    assert "APPROX RPM:" in block
+    assert "- MODEL DIA = NOMINAL - (0.07 x PITCH)" in block
+    assert "- OUTPUT MATCHES CURRENT THREAD CALCULATOR APPROXIMATION" in block
+    assert "- THREAD FEED = PITCH IN INCHES PER REV" in block
+    assert "- VERIFY AGAINST PRINT / GAGE WHEN NEEDED" in block
 
 
 def test_id_thread_drill_percent_calculation_uses_pitch_rule():
