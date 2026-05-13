@@ -229,7 +229,18 @@ def format_thread_dimension(value_in: float, system: str) -> str:
     return f"{value_in:.4f} in ({value_mm:.4f} mm)"
 
 
-def build_thread_detail_rows(thread_callout: str, thread_data: dict, thread_percent: int = 75) -> list[dict]:
+def locknut_detail_value(value) -> str:
+    if has_useful_locknut_value(value):
+        return str(value)
+    return "NOT AVAILABLE IN SELECTED LOCKNUT CALLOUT."
+
+
+def build_locknut_thread_detail_block(
+    locknut_entry: dict,
+    series_info: dict,
+    thread_data: dict,
+    thread_percent: int = 75,
+) -> str:
     id_values = calculate_id_thread_values(
         nominal_dia_in=thread_data["nominal_dia_in"],
         pitch_in=thread_data["pitch_in"],
@@ -244,6 +255,7 @@ def build_thread_detail_rows(thread_callout: str, thread_data: dict, thread_perc
         pitch_in=thread_data["pitch_in"],
         material=next(iter(OD_THREADING)),
     )
+    estimated_minor_dia_in = thread_data["nominal_dia_in"] - (2 * od_values["estimated_thread_depth_in"])
 
     if thread_data["system"] == "metric":
         pitch_display = f"{thread_data['pitch_mm']:.4f} mm"
@@ -252,47 +264,40 @@ def build_thread_detail_rows(thread_callout: str, thread_data: dict, thread_perc
         pitch_display = f"{thread_data['pitch_in']:.6f} in"
         tpi_display = f"{thread_data['tpi_equiv']:.4f}"
 
+    thread_callout = locknut_entry["thread"]
     thread_fit = extract_thread_fit(thread_callout)
+    class_fit = thread_fit if thread_fit else "NOT AVAILABLE IN SELECTED LOCKNUT CALLOUT."
 
-    return [
-        {"Detail": "Pitch", "Value": pitch_display, "Basis": "Parsed by Thread Calculator"},
-        {"Detail": "TPI", "Value": tpi_display, "Basis": "Parsed by Thread Calculator"},
-        {
-            "Detail": "Major diameter",
-            "Value": format_thread_dimension(thread_data["nominal_dia_in"], thread_data["system"]),
-            "Basis": "Nominal thread callout",
-        },
-        {
-            "Detail": "Pitch diameter",
-            "Value": "Not available in loaded public locknut lookup",
-            "Basis": "Requires catalog/class-specific thread data",
-        },
-        {
-            "Detail": "Minor diameter",
-            "Value": "Not available in loaded public locknut lookup",
-            "Basis": "Requires catalog/class-specific thread data",
-        },
-        {
-            "Detail": "Tap drill / minor reference",
-            "Value": format_thread_dimension(id_values["recommended_drill_in_basic"], thread_data["system"]),
-            "Basis": "Thread Calculator basic rule: nominal - pitch",
-        },
-        {
-            "Detail": f"Tap drill reference ({thread_percent}% thread)",
-            "Value": format_thread_dimension(id_values["recommended_drill_in_percent"], thread_data["system"]),
-            "Basis": "Thread Calculator percent-thread estimate",
-        },
-        {
-            "Detail": "OD model diameter",
-            "Value": format_thread_dimension(od_values["model_dia_in"], thread_data["system"]),
-            "Basis": "Thread Calculator OD model diameter estimate",
-        },
-        {
-            "Detail": "Class / fit",
-            "Value": thread_fit if thread_fit else "Not available in selected locknut thread callout",
-            "Basis": "Displayed only when the callout includes a class/fit",
-        },
-    ]
+    return f"""THREAD: {thread_callout}
+TYPE: OD / EXTERNAL LOCKNUT THREAD
+SYSTEM: {thread_data["system"].upper()}
+DESIGNATION / LOCKNUT SIZE: {locknut_entry["designation"]}
+SERIES: {series_info["label"]}
+
+NOMINAL / MAJOR DIAMETER: {format_thread_dimension(thread_data["nominal_dia_in"], thread_data["system"])}
+PITCH: {pitch_display}
+TPI: {tpi_display}
+CLASS / FIT: {class_fit}
+
+PITCH DIAMETER ESTIMATE:
+THREAD CALCULATOR OD MODEL: {format_thread_dimension(od_values["model_dia_in"], thread_data["system"])}
+MODEL DROP: {format_thread_dimension(od_values["model_drop_in"], thread_data["system"])}
+
+MINOR DIAMETER ESTIMATE:
+THREAD DEPTH ESTIMATE: {format_thread_dimension(od_values["estimated_thread_depth_in"], thread_data["system"])}
+MINOR FROM NOMINAL - (2 x DEPTH): {format_thread_dimension(estimated_minor_dia_in, thread_data["system"])}
+
+TAP DRILL / MINOR REFERENCE:
+BASIC (100% PITCH RULE): {format_thread_dimension(id_values["recommended_drill_in_basic"], thread_data["system"])}
+{thread_percent}% THREAD DRILL ESTIMATE: {format_thread_dimension(id_values["recommended_drill_in_percent"], thread_data["system"])}
+
+LOCKNUT DETAILS:
+MATCHING LOCK / WASHER: {locknut_detail_value(locknut_entry.get("matching_lock"))}
+KEYWAY / SPANNER: {locknut_detail_value(locknut_entry.get("keyway_spanner_reference"))}
+
+VERIFY NOTE:
+VERIFY FINAL DIMENSIONS AGAINST CATALOG / PRINT / GAGE / APPLICABLE STANDARD
+"""
 
 
 def calculate_id_thread_values(
@@ -428,7 +433,7 @@ with thread_tab:
     NOTES:
     - BASIC DRILL = NOMINAL - PITCH
     - {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
-    - VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
+    - VERIFY FINAL DRILL AGAINST CATALOG / PRINT / GAGE / APPLICABLE STANDARD
     """,
                 language="text"
             )
@@ -454,7 +459,7 @@ with thread_tab:
     NOTES:
     - BASIC DRILL = NOMINAL - PITCH
     - {thread_percent}% THREAD DRILL = NOMINAL - ({thread_percent}% x PITCH)
-    - VERIFY FINAL DRILL AGAINST PRINT / GAGE / SHOP STANDARD
+    - VERIFY FINAL DRILL AGAINST CATALOG / PRINT / GAGE / APPLICABLE STANDARD
     """,
                 language="text"
             )
@@ -590,22 +595,28 @@ with locknut_tab:
     st.markdown("### Thread Details")
     try:
         locknut_thread_data = parse_thread_callout(locknut_entry["thread"])
-        st.dataframe(
-            pd.DataFrame(build_thread_detail_rows(locknut_entry["thread"], locknut_thread_data)),
-            use_container_width=True,
-            hide_index=True,
+        st.code(
+            build_locknut_thread_detail_block(locknut_entry, series_info, locknut_thread_data),
+            language="text",
         )
         st.caption(
             "General thread references use the same parser and estimate helpers as the Thread Calculator. "
-            "Verify class/fit and catalog-controlled dimensions before machining."
+            "Estimated values are starting references only; verify catalog-controlled dimensions before machining."
         )
     except Exception:
-        st.info("Thread detail values are not available for this locknut row. Verify the selected thread in the current manufacturer catalog.")
+        st.code(
+            """THREAD DETAILS:
+NOT AVAILABLE IN SELECTED LOCKNUT CALLOUT.
+
+VERIFY NOTE:
+VERIFY FINAL DIMENSIONS AGAINST CATALOG / PRINT / GAGE / APPLICABLE STANDARD
+""",
+            language="text",
+        )
 
     st.markdown("### Source / Notes")
     write_locknut_field("Source Family", locknut_entry.get("source_family"))
     write_locknut_field("Source Note", locknut_entry.get("source_note"))
-    write_locknut_field("Machining / Programming Notes", locknut_entry.get("programming_notes"))
 
     with st.expander("Series table", expanded=False):
         st.dataframe(build_visible_locknut_table(LOCKNUT_DATA[locknut_series]), use_container_width=True, hide_index=True)
