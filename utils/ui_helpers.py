@@ -6,7 +6,7 @@ def render_cutting_mode_sidebar():
 
 
 def render_sidebar_nav(current_page: str):
-    st.sidebar.title("CNC Toolkit")
+    st.sidebar.title("CutWise")
 
     st.sidebar.markdown("### Workbench")
     st.sidebar.page_link("app.py", label="Home")

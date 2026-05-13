@@ -2,7 +2,7 @@ import streamlit as st
 from utils.ui_helpers import render_sidebar_nav
 
 st.set_page_config(
-    page_title="Home",
+    page_title="CutWise",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -61,8 +61,8 @@ render_sidebar_nav("Home")
 
 st.markdown("""
 <div class="home-head">
-    <div style="font-size:0.9rem; opacity:0.8;">PUBLIC CNC PROGRAMMER TOOLKIT</div>
-    <div style="font-size:2.2rem; font-weight:800; margin-top:0.15rem;">CNC PROGRAMMING TOOLKIT</div>
+    <div style="font-size:0.9rem; opacity:0.8;">PUBLIC CNC PROGRAMMING REFERENCE</div>
+    <div style="font-size:2.2rem; font-weight:800; margin-top:0.15rem;">CutWise</div>
     <div style="font-size:0.98rem; opacity:0.85; margin-top:0.35rem;">
         General machining calculators and programming references
     </div>

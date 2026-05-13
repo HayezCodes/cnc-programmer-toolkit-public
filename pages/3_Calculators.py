@@ -22,7 +22,7 @@ from utils.holemaking import (
 from utils.ui_helpers import render_sidebar_nav
 
 st.set_page_config(
-    page_title="Math Workbench",
+    page_title="CutWise | Math Workbench",
     layout="wide",
     initial_sidebar_state="expanded"
 )

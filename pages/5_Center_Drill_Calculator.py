@@ -6,7 +6,7 @@ from utils.ui_helpers import render_sidebar_nav
 
 
 st.set_page_config(
-    page_title="Center Drill Calculator",
+    page_title="CutWise | Center Drill Calculator",
     layout="wide",
     initial_sidebar_state="expanded",
 )

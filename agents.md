@@ -1,8 +1,8 @@
-# CNC Programmer Toolkit Public - Agent System
+# CutWise Public - Agent System
 
 ## Product Vision
 
-Build a polished public CNC Programmer Toolkit for machinists, CNC programmers, and manufacturing engineers.
+Build a polished public CutWise app for machinists, CNC programmers, and manufacturing engineers.
 
 The app should provide practical CNC programming support while remaining safe for a public GitHub repository. It must be clean, modern, fast, and easy to use in a shop or office.
 

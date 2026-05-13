@@ -5,7 +5,7 @@ from utils.ui_helpers import render_sidebar_nav
 
 
 st.set_page_config(
-    page_title="Spot Drill & Hole Chamfer",
+    page_title="CutWise | Spot Drill & Hole Chamfer",
     layout="wide",
     initial_sidebar_state="expanded",
 )

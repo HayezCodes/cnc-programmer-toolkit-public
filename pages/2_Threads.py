@@ -22,7 +22,7 @@ from utils.formulas import rpm_from_sfm, tap_feed_ipm_from_tpi
 from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
-    page_title="Threads",
+    page_title="CutWise | Threads",
     layout="wide",
     initial_sidebar_state="expanded"
 )

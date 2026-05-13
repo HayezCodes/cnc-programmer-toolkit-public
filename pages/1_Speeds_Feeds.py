@@ -6,7 +6,7 @@ from utils.formulas import rpm_from_sfm, ipm_from_ipr, drill_feed_ipm, tap_feed_
 from utils.ui_helpers import render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
-    page_title="Speeds & Feeds",
+    page_title="CutWise | Speeds & Feeds",
     layout="wide",
     initial_sidebar_state="expanded"
 )

@@ -4,7 +4,7 @@ Plan date: 2026-05-11
 
 Scope: planning only. Do not delete, move, refactor, commit, or push until this plan is reviewed and approved.
 
-Goal: turn this copied repo into a clean public CNC Programmer Toolkit while preserving public-safe calculators, thread tools, drill/tap charts, chamfer/triangle math, Woodruff/keyway support, and general machining references.
+Goal: turn this copied repo into a clean public CutWise app while preserving public-safe calculators, thread tools, drill/tap charts, chamfer/triangle math, Woodruff/keyway support, and general machining references.
 
 ## 1. Remove Completely Before Public Release
 
@@ -346,7 +346,7 @@ Risks to check:
 Actions:
 
 - Delete the private company logo asset.
-- Replace private company/author captions with public CNC Programmer Toolkit branding.
+- Replace private company/author captions with CutWise branding.
 - Clean `data/materials.py` private-company notes.
 
 Risks to check:

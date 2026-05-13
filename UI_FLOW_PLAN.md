@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make the public CNC Programmer Toolkit feel like a connected programming workbench instead of a set of unrelated pages.
+Make CutWise feel like a connected programming workbench instead of a set of unrelated pages.
 
 ## Primary Navigation
 

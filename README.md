@@ -1,6 +1,6 @@
-# CNC Programming Toolkit
+# CutWise
 
-A Streamlit-based toolkit for CNC programmers to quickly calculate speeds, feeds, threads, and machining geometry.
+CutWise is a Streamlit-based reference app for CNC programmers to quickly calculate speeds, feeds, threads, and machining geometry.
 
 ## Features
 - Speeds & Feeds (Lathe + Mill)
