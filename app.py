@@ -95,7 +95,8 @@ def render_tool_card(icon: str, title: str, description: str) -> None:
     )
 
 
-main_col1, main_col2, main_col3 = st.columns(3)
+# Home cards should mirror sidebar navigation.
+main_col1, main_col2 = st.columns(2)
 
 with main_col1:
     render_tool_card(
@@ -115,6 +116,8 @@ with main_col2:
     if st.button("Open Threads", use_container_width=True):
         st.switch_page("pages/2_Threads.py")
 
+main_col3, main_col4 = st.columns(2)
+
 with main_col3:
     render_tool_card(
         "📐",
@@ -124,8 +127,6 @@ with main_col3:
     if st.button("Open Math Workbench", use_container_width=True):
         st.switch_page("pages/3_Calculators.py")
 
-main_col4, main_col5, main_col6 = st.columns(3)
-
 with main_col4:
     render_tool_card(
         "📜",
@@ -134,21 +135,3 @@ with main_col4:
     )
     if st.button("Open G/M Codes & References", use_container_width=True):
         st.switch_page("pages/6_G_M_Codes.py")
-
-with main_col5:
-    render_tool_card(
-        "◺",
-        "Chamfer Calculator",
-        "Spot drill, countersink, and hole chamfer depth calculations.",
-    )
-    if st.button("Open Chamfer Calculator", use_container_width=True):
-        st.switch_page("pages/4_Chamfer_Calculator.py")
-
-with main_col6:
-    render_tool_card(
-        "🎯",
-        "Center Drill Calculator",
-        "Finished center or spot diameter depth from pilot and included-angle geometry.",
-    )
-    if st.button("Open Center Drill Calculator", use_container_width=True):
-        st.switch_page("pages/5_Center_Drill_Calculator.py")
