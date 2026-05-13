@@ -19,7 +19,7 @@ from data.general_references import (
 )
 from data.threads_data import METRIC_THREADS, UN_THREADS
 from utils.formulas import rpm_from_sfm, tap_feed_ipm_from_tpi
-from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav, render_cutting_mode_sidebar
+from utils.ui_helpers import get_arcwise_logo_path, render_page_header, render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
     page_title="ArcWise | Threads",
@@ -30,14 +30,6 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-[data-testid="stSidebarNav"] {
-    display: none;
-}
-
-.block-container {
-    padding-top: 2.2rem;
-    padding-bottom: 1.2rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -45,8 +37,11 @@ render_sidebar_nav("Threads")
 
 render_cutting_mode_sidebar()
 
-st.title("Threads")
-st.caption("General thread, tap drill, and modeling reference. Verify final values against the print, gage, and applicable standards.")
+render_page_header(
+    "Threads",
+    "General thread, tap drill, OD model, and locknut reference for programming checks. Verify final values against the print, gage, and applicable standards.",
+    "Threading Reference",
+)
 
 THREAD_SERIES_SUFFIXES = ("UNC", "UNF", "UNEF", "UN", "UNS")
 

@@ -19,7 +19,7 @@ from utils.holemaking import (
     chamfer_depth_from_diameters,
     chamfer_width_from_depth,
 )
-from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav
+from utils.ui_helpers import get_arcwise_logo_path, render_page_header, render_sidebar_nav
 
 st.set_page_config(
     page_title="ArcWise | Math Workbench",
@@ -83,15 +83,6 @@ def build_woodruff_hub_display_rows(rows: list[dict]) -> list[dict]:
 
 st.markdown("""
 <style>
-[data-testid="stSidebarNav"] {
-    display: none;
-}
-
-.block-container {
-    padding-top: 2.2rem;
-    padding-bottom: 1.2rem;
-}
-
 header[data-testid="stHeader"] {
     height: 0.8rem;
 }
@@ -102,33 +93,34 @@ header[data-testid="stHeader"] {
 }
 
 .workbench-note {
-    border: 1px solid rgba(250,250,250,0.10);
+    border: 1px solid rgba(88, 173, 255, 0.16);
     border-radius: 8px;
     padding: 12px 14px;
-    background: rgba(255,255,255,0.025);
+    background: rgba(40, 150, 255, 0.075);
+    color: #c7d8e8;
     font-size: 0.92rem;
     line-height: 1.35;
-    opacity: 0.92;
     margin-bottom: 0.65rem;
 }
 
 .compact-tool-card {
-    border: 1px solid rgba(250,250,250,0.12);
+    border: 1px solid rgba(88, 173, 255, 0.16);
     border-radius: 8px;
     padding: 12px 14px;
-    background: rgba(255,255,255,0.025);
+    background: linear-gradient(180deg, rgba(18, 38, 58, 0.72), rgba(7, 14, 23, 0.88));
     min-height: 120px;
     margin-bottom: 0.4rem;
 }
 
 .compact-tool-title {
+    color: #edf7ff;
     font-weight: 700;
     margin-bottom: 0.25rem;
 }
 
 .compact-tool-text {
+    color: #b8c8d9;
     font-size: 0.9rem;
-    opacity: 0.86;
     line-height: 1.32;
 }
 </style>
@@ -137,8 +129,11 @@ header[data-testid="stHeader"] {
 render_sidebar_nav("Math Workbench")
 
 st.markdown('<div class="calc-title-wrap">', unsafe_allow_html=True)
-st.title("Machining Math Workbench")
-st.caption("Compact CNC programming math, organized by the kind of shop problem you are solving.")
+render_page_header(
+    "Machining Math Workbench",
+    "Compact CNC programming math for holemaking, geometry, conversions, keyways, Woodruff references, and chamfer checks.",
+    "Programming Math",
+)
 st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(

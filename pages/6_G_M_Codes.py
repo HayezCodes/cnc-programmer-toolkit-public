@@ -20,7 +20,7 @@ from data.general_references import (
     THREAD_CLASS_REFERENCES,
     TOOLHOLDER_SHORTHAND,
 )
-from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav
+from utils.ui_helpers import get_arcwise_logo_path, render_page_header, render_sidebar_nav
 
 st.set_page_config(
     page_title="ArcWise | G & M Codes",
@@ -32,14 +32,6 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-[data-testid="stSidebarNav"] {
-    display: none;
-}
-
-.block-container {
-    padding-top: 2.2rem;
-    padding-bottom: 1.2rem;
-}
 </style>
 """,
     unsafe_allow_html=True,
@@ -47,8 +39,11 @@ st.markdown(
 
 render_sidebar_nav("G & M Codes")
 
-st.title("G/M Codes & References")
-st.caption("General reference only. Code behavior, tooling values, and inspection expectations can vary by machine/control.")
+render_page_header(
+    "G/M Codes & References",
+    "General machining references for common code behavior, holemaking, threads, tooling shorthand, surface finish, and fit checks.",
+    "Reference Library",
+)
 
 st.warning(
     "MOST IMPORTANT: Verify machine state, active offset, spindle direction, coolant state, tool comp, and tool length before cycle start."

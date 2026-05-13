@@ -3,7 +3,7 @@ from data.center_drills import CENTER_DRILL_PRESETS, center_drill_label
 from data.materials import LATHE_MATERIALS, MILL_MATERIALS, DRILL_DATA, OPERATOR_NOTES
 from data.woodruff_reference import build_woodruff_reference, WOODRUFF_SOURCE_TYPES
 from utils.formulas import rpm_from_sfm, ipm_from_ipr, drill_feed_ipm, tap_feed_ipm_from_tpi
-from utils.ui_helpers import get_arcwise_logo_path, render_sidebar_nav, render_cutting_mode_sidebar
+from utils.ui_helpers import get_arcwise_logo_path, render_page_header, render_sidebar_nav, render_cutting_mode_sidebar
 
 st.set_page_config(
     page_title="ArcWise | Speeds & Feeds",
@@ -14,23 +14,17 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-[data-testid="stSidebarNav"] {
-    display: none;
-}
-
-.block-container {
-    padding-top: 2.2rem;
-    padding-bottom: 1.2rem;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 render_sidebar_nav("Speeds & Feeds")
 render_cutting_mode_sidebar()
 
-st.title("Speeds & Feeds")
-st.caption("General reference starting values. Verify with tool vendor data, machine condition, setup, and material.")
+render_page_header(
+    "Speeds & Feeds",
+    "General reference starting values for lathe, mill, drill, tap, center drill, endmill, and Woodruff cutter work. Verify with tool vendor data, machine condition, setup, and material.",
+    "Machining Data",
+)
 
 
 def apply_cut_mode(value, kind="sfm"):
