@@ -202,25 +202,11 @@ dashboard_cards = [
         "Open G/M Codes & References",
         "pages/6_G_M_Codes.py",
     ),
-    (
-        "◺",
-        "Chamfer Calculator",
-        "Spot drill, countersink, and hole chamfer depth from included angle and target diameter.",
-        "Open Chamfer Calculator",
-        "pages/4_Chamfer_Calculator.py",
-    ),
-    (
-        "🎯",
-        "Center Drill Calculator",
-        "Finished center or spot diameter depth from pilot diameter and included-angle geometry.",
-        "Open Center Drill Calculator",
-        "pages/5_Center_Drill_Calculator.py",
-    ),
 ]
 
-for row_start in range(0, len(dashboard_cards), 3):
-    columns = st.columns(3)
-    for column, (icon, title, description, button_label, page) in zip(columns, dashboard_cards[row_start:row_start + 3]):
+for row_start in range(0, len(dashboard_cards), 2):
+    columns = st.columns(2)
+    for column, (icon, title, description, button_label, page) in zip(columns, dashboard_cards[row_start:row_start + 2]):
         with column:
             render_tool_card(icon, title, description)
             if st.button(button_label, use_container_width=True):
